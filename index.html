@@ -185,7 +185,7 @@ footer a{color:var(--faint)}
     <label class="f" id="onceF">Date<input type="date" name="date"></label>
     <div class="actions">
       <button type="button" class="btn outline" id="addCancel">Cancel</button>
-      <button class="btn primary">Add</button>
+      <button class="btn primary" id="addSubmit">Add</button>
     </div>
   </form>
 </dialog>
@@ -264,7 +264,7 @@ const save = () => {
 };
 
 let cur = new Date(); cur.setDate(1);
-let selDate = null, selId = null, addType = 'once';
+let selDate = null, selId = null, addType = 'once', editId = null;
 
 const itemsOf = ds => {
   const dow = new Date(ds + 'T00:00').getDay();
@@ -369,7 +369,9 @@ $('#list').onclick = e => {
     S.once = S.once.filter(o => o.id !== id);
     if (selId === id) selId = null; save(); return refresh();
   }
-  selId = selId === id ? null : id; renderDay();
+  // tapping a row opens it for editing
+  const it = S.fixed.find(x => x.id === id) || S.once.find(x => x.id === id);
+  if (it) openAdd(S.fixed.includes(it) ? 'fixed' : 'once', it);
 };
 
 // routine delete: skip just this date, or remove the routine everywhere
@@ -386,10 +388,13 @@ function askDeleteRoutine(f) {
   d.showModal();
 }
 
-function openAdd(type) {
-  addType = type;
-  $('#addTitle').textContent = type === 'fixed' ? 'New routine.' : 'New event.';
-  $('#addSub').textContent = type === 'fixed' ? 'Repeats at the same time on the chosen weekdays.' : 'A one-time event on a single day.';
+function openAdd(type, it) {
+  addType = type; editId = it?.id || null;
+  $('#addTitle').textContent = (it ? 'Edit ' : 'New ') + (type === 'fixed' ? 'routine.' : 'event.');
+  $('#addSub').textContent = type === 'fixed'
+    ? (it ? 'Changes apply to every day it repeats.' : 'Repeats at the same time on the chosen weekdays.')
+    : 'A one-time event on a single day.';
+  $('#addSubmit').textContent = it ? 'Save' : 'Add';
   $('#fixedF').hidden = type !== 'fixed';
   $('#onceF').hidden = type === 'fixed';
   $('#form').reset(); gap = 0;
@@ -399,6 +404,17 @@ function openAdd(type) {
   // routines default to the month on screen; clearing Until means no end date
   $('#form').from.value = ymd(new Date(cur.getFullYear(), cur.getMonth(), 1));
   $('#form').until.value = ymd(new Date(cur.getFullYear(), cur.getMonth() + 1, 0));
+  if (it) {
+    const f = $('#form');
+    f.title.value = it.title; f.start.value = it.start;
+    f.end.value = hm(Math.min(mins(it.start) + it.dur, 1439)); gap = it.dur;
+    const g = f.querySelector(`[name=group][value="${it.group || ''}"]`);
+    if (g) g.checked = true;
+    if (type === 'fixed') {
+      f.querySelectorAll('.days input').forEach(i => i.checked = it.days.includes(+i.value));
+      f.from.value = it.from || ''; f.until.value = it.until || '';
+    } else f.date.value = it.date;
+  }
   $('#addDlg').showModal();
 }
 $('#addFixed').onclick = () => openAdd('fixed');
@@ -418,19 +434,21 @@ $('.quick').onclick = e => {
 
 $('#fixedF .days').innerHTML = DOW.map((d, i) => `<label><input type="checkbox" value="${i}" checked><span>${d}</span></label>`).join('');
 
+// replace the item being edited, or add a new one
+const upsert = (list, item) => { const i = list.findIndex(x => x.id === item.id); i < 0 ? list.push(item) : list[i] = item; };
 $('#form').onsubmit = e => {
   e.preventDefault();
-  const f = e.target, base = { id: uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null };
+  const f = e.target, base = { id: editId || uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null };
   if (base.dur <= 0) return alert('End time must be after start time.');
   if (addType === 'fixed') {
     const days = [...f.querySelectorAll('.days input:checked')].map(i => +i.value);
     if (!days.length) return alert('Pick at least one weekday.');
     const from = f.from.value || null, until = f.until.value || null;
     if (from && until && until < from) return alert('Until must be on or after From.');
-    S.fixed.push({ ...base, days, from, until });
+    upsert(S.fixed, { ...base, days, from, until, skip: S.fixed.find(x => x.id === editId)?.skip });
   } else {
     if (!f.date.value) return;
-    S.once.push({ ...base, date: f.date.value });
+    upsert(S.once, { ...base, date: f.date.value });
   }
   save(); $('#addDlg').close(); refresh();
 };
