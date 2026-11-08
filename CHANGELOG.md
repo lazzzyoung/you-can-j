@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1] - 2026-11-08
+### Changed
+- The Important toggle is now a round star button in the top-right corner of the event/routine form.
+
+### Fixed
+- Tapping +10m/+30m/+1h quickly no longer zooms the page on iPhone.
+
 ## [0.6.0] - 2026-11-08
 ### Added
 - Star individual events and routines; starred items and the days that hold them get the rainbow border.
