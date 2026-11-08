@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>You can J</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="You can J">
+<meta name="theme-color" content="#ffffff">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
@@ -85,7 +90,9 @@ input[type=text],input[type=email],input[type=time],input[type=number],input[typ
 /* iOS: native date/time inputs ignore width unless appearance is reset */
 input[type=time],input[type=date]{-webkit-appearance:none;appearance:none;text-align:left}
 input::-webkit-date-and-time-value{text-align:left}
-input:focus{outline:2px solid var(--ink)}
+select{font:inherit;font-size:16px;font-weight:450;background:var(--field);border:0;border-radius:16px;padding:0 16px;height:48px;color:var(--ink);width:100%;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 22px) 21px,calc(100% - 16px) 21px;background-size:6px 6px;background-repeat:no-repeat}
+.hint{font-size:12px;font-weight:450;color:var(--muted)}
+input:focus,select:focus{outline:2px solid var(--ink)}
 input::placeholder{color:var(--faint)}
 .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
 .days{display:flex;gap:6px}
@@ -198,6 +205,17 @@ footer a{color:var(--faint)}
       </div>
     </div>
     <label class="f" id="onceF">Date<input type="date" name="date"></label>
+    <label class="f">Remind me
+      <select name="alarm">
+        <option value="">No reminder</option>
+        <option value="0">At start time</option>
+        <option value="5">5 min before</option>
+        <option value="10">10 min before</option>
+        <option value="30">30 min before</option>
+        <option value="60">1 hour before</option>
+      </select>
+      <small class="hint" id="alarmHint" hidden>On iPhone, reminders work after you add this site to your Home Screen (Share → Add to Home Screen) and open it from there.</small>
+    </label>
     <label class="startog"><input type="checkbox" name="star"><span>★ Important</span></label>
     <div class="actions">
       <button type="button" class="btn outline" id="addCancel">Cancel</button>
@@ -255,7 +273,7 @@ const mins = t => +t.slice(0,2)*60 + +t.slice(3,5);
 const hm = m => `${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// state: fixed = recurring {id,title,start,dur,days,from,until,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; star:true on an item marks it (and its days) important; todos = undated {id,title,done}
+// state: fixed = recurring {id,title,start,dur,days,from,until,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; star:true on an item marks it (and its days) important; todos = undated {id,title,done}; alarm = minutes before start (null = none)
 // Supabase: paste Project URL + anon/publishable key (Settings → API). Empty = data stays in this browser only.
 // Never put the service_role key here.
 const SB_URL = 'https://htfzxxmkdqbpzqtxfoqj.supabase.co';
@@ -379,7 +397,7 @@ function renderDay() {
     <div class="row${i.id === selId ? ' sel' : ''}${isDone(selDate, i.id) ? ' done' : ''}${i.star ? ' star' : ''}" data-id="${i.id}">
       <input type="checkbox" ${isDone(selDate, i.id) ? 'checked' : ''} aria-label="Done">
       <i class="gdot"${grp(i.group) ? ` style="background:${grp(i.group).color}"` : ''}></i>
-      <div class="t"><b>${esc(i.title)}</b><span>${i.start}–${hm(mins(i.start) + i.dur)}${i.fixed ? ' · Routine' : ''}${grp(i.group) ? ' · ' + esc(grp(i.group).name) : ''}</span></div>
+      <div class="t"><b>${esc(i.title)}</b><span>${i.start}–${hm(mins(i.start) + i.dur)}${i.fixed ? ' · Routine' : ''}${i.alarm != null ? ' · 🔔' : ''}${grp(i.group) ? ' · ' + esc(grp(i.group).name) : ''}</span></div>
       <button class="x" aria-label="Delete">✕</button>
     </div>`).join('') : '<p class="empty">Nothing planned.</p>';
   const td = S.todos.filter(t => !t.done);
@@ -450,7 +468,7 @@ function openAdd(type, it) {
   $('#form').until.value = ymd(new Date(cur.getFullYear(), cur.getMonth() + 1, 0));
   if (it) {
     const f = $('#form');
-    f.title.value = it.title; f.start.value = it.start; f.star.checked = !!it.star;
+    f.title.value = it.title; f.start.value = it.start; f.star.checked = !!it.star; f.alarm.value = it.alarm ?? '';
     f.end.value = hm(Math.min(mins(it.start) + it.dur, 1439)); gap = it.dur;
     const g = f.querySelector(`[name=group][value="${it.group || ''}"]`);
     if (g) g.checked = true;
@@ -489,8 +507,9 @@ $('#fixedF .days').innerHTML = DOW.map((d, i) => `<label><input type="checkbox" 
 const upsert = (list, item) => { const i = list.findIndex(x => x.id === item.id); i < 0 ? list.push(item) : list[i] = item; };
 $('#form').onsubmit = e => {
   e.preventDefault();
-  const f = e.target, base = { id: editId || uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null, star: f.star.checked };
+  const f = e.target, base = { id: editId || uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null, star: f.star.checked, alarm: f.alarm.value === '' ? null : +f.alarm.value };
   if (base.dur <= 0) return alert('End time must be after start time.');
+  if (base.alarm != null) enablePush(); // must start inside the tap so iOS shows the permission prompt
   if (addType === 'fixed') {
     const days = [...f.querySelectorAll('.days input:checked')].map(i => +i.value);
     if (!days.length) return alert('Pick at least one weekday.');
@@ -568,8 +587,34 @@ $('#loginForm').onsubmit = async e => {
   }
   btn.disabled = false;
 };
+// reminders: the send-alarms function (supabase/functions) pushes to every device saved in push_subs
+const VAPID = 'BA4jzTzkSfQQILWNaEfCF1l1ieb2gVffeyu2kUVWjEMlhiPo7TSjVh92QxnhhXXc87tJ18kREFON5nMsBAjVkz4';
+const canPush = 'serviceWorker' in navigator && 'PushManager' in window;
+if (canPush) navigator.serviceWorker.register('/sw.js').catch(() => {});
+// iPhone Safari only gets PushManager once the site is opened from the Home Screen
+$('#alarmHint').hidden = canPush || !/iPhone|iPad/.test(navigator.userAgent);
+async function enablePush() {
+  if (!canPush || !user) return;
+  if (await Notification.requestPermission() !== 'granted') return toast('Reminders are off. Allow notifications for this site.');
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const key = Uint8Array.from(atob(VAPID.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+    const { error } = await sb.from('push_subs').upsert({ endpoint: sub.endpoint, sub: sub.toJSON(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone });
+    if (error) throw error;
+  } catch { toast('Couldn’t turn on reminders on this device.'); }
+}
+// stop this device's reminders so the next person signing in here doesn't get them
+async function disablePush() {
+  try {
+    const s = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
+    if (s) { await sb.from('push_subs').delete().eq('endpoint', s.endpoint); await s.unsubscribe(); }
+  } catch {}
+}
+
 $('#signOut').onclick = async () => {
   try { localStorage.removeItem(localKey()); } catch {} // don't leave this user's planner on a shared device
+  if (canPush) await disablePush();
   await sb.auth.signOut();
   start(null);
 };
