@@ -174,6 +174,16 @@ footer a{color:var(--faint)}
   </form>
 </dialog>
 
+<dialog id="delDlg">
+  <h2>Delete routine.</h2>
+  <p class="sub">Remove just this day, or every day it repeats?</p>
+  <form method="dialog" class="actions" style="flex-direction:column">
+    <button class="btn primary" value="one">Only this day</button>
+    <button class="btn outline" value="all">All days</button>
+    <button class="btn soft" value="">Cancel</button>
+  </form>
+</dialog>
+
 <dialog id="loginDlg">
   <h2>Sign in.</h2>
   <p class="sub" id="loginSub">Sign in to sync your planner.</p>
@@ -213,7 +223,7 @@ const mins = t => +t.slice(0,2)*60 + +t.slice(3,5);
 const hm = m => `${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// state: fixed = recurring {id,title,start,dur,days,from}; once = {id,date,title,start,dur}; done = {"date|id":1}
+// state: fixed = recurring {id,title,start,dur,days,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}
 // Supabase: paste Project URL + anon/publishable key (Settings → API). Empty = data stays in this browser only.
 // Never put the service_role key here.
 const SB_URL = 'https://htfzxxmkdqbpzqtxfoqj.supabase.co';
@@ -243,7 +253,7 @@ let selDate = null, selId = null, addType = 'once';
 const itemsOf = ds => {
   const dow = new Date(ds + 'T00:00').getDay();
   return [
-    ...S.fixed.filter(f => f.days.includes(dow)).map(f => ({...f, fixed:true})),
+    ...S.fixed.filter(f => f.days.includes(dow) && !f.skip?.includes(ds)).map(f => ({...f, fixed:true})),
     ...S.once.filter(o => o.date === ds)
   ].sort((a, b) => a.start.localeCompare(b.start));
 };
@@ -336,12 +346,26 @@ $('#list').onclick = e => {
   if (e.target.matches('input')) { e.target.checked ? S.done[selDate + '|' + id] = 1 : delete S.done[selDate + '|' + id]; save(); return refresh(); }
   if (e.target.matches('.x')) {
     const f = S.fixed.find(f => f.id === id);
-    if (f && !confirm('This routine will be removed from every day. Delete?')) return;
-    S.fixed = S.fixed.filter(f => f.id !== id); S.once = S.once.filter(o => o.id !== id);
+    if (f) return askDeleteRoutine(f);
+    S.once = S.once.filter(o => o.id !== id);
     if (selId === id) selId = null; save(); return refresh();
   }
   selId = selId === id ? null : id; renderDay();
 };
+
+// routine delete: skip just this date, or remove the routine everywhere
+function askDeleteRoutine(f) {
+  const d = $('#delDlg');
+  d.returnValue = '';
+  d.onclose = () => {
+    if (d.returnValue === 'one') (f.skip ||= []).push(selDate);
+    else if (d.returnValue === 'all') S.fixed = S.fixed.filter(x => x !== f);
+    else return;
+    if (selId === f.id) selId = null;
+    save(); refresh();
+  };
+  d.showModal();
+}
 
 function openAdd(type) {
   addType = type;
