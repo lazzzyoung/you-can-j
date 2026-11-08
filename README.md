@@ -2,13 +2,15 @@
 
 A simple monthly planner: a month calendar, one-off events, weekly routines, color groups, and a 24-hour dial for each day. Plain HTML, synced with Supabase, hosted on Vercel.
 
-- Live: https://month-do.vercel.app
+- Live: https://you-can-j.vercel.app
 - Database schema: [`supabase.sql`](supabase.sql)
 - History: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Run locally
 
 Open `index.html` in a browser. Sign-in and sync use the Supabase project configured at the top of the script.
+
+Reminders: run the Reminders part of `supabase.sql`, add `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` as Edge Function secrets, and deploy `supabase/functions/send-alarms`. Check the timing logic with `node supabase/functions/send-alarms/test-due.mjs`.
 
 ## Git conventions
 

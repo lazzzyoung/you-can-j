@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>You can J</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="You can J">
+<meta name="theme-color" content="#ffffff">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
@@ -40,15 +45,17 @@ main{max-width:960px;margin:0 auto}
 .day.pad{border:0;pointer-events:none}
 .day .n{font-size:14px;font-weight:600;width:26px;height:26px;display:grid;place-items:center;border-radius:9999px}
 .day.today .n{background:var(--ink);color:#fff}
-/* starred day: rainbow border that slowly rotates */
+/* starred item, and any day holding one: rotating rainbow border */
 @property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
-.day.star{border:2px solid transparent;padding:7px;--rb:conic-gradient(from var(--a),#ff595e,#ffca3a,#8ac926,#1982c4,#6a4c93,#ff595e);background:linear-gradient(var(--canvas),var(--canvas)) padding-box,var(--rb) border-box;animation:spin 3s linear infinite}
-.day.star:hover{background:linear-gradient(var(--soft),var(--soft)) padding-box,var(--rb) border-box}
+.day.star,.row.star{--bg:var(--canvas);border:2px solid transparent;--rb:conic-gradient(from var(--a),#ff595e,#ffca3a,#8ac926,#1982c4,#6a4c93,#ff595e);background:linear-gradient(var(--bg),var(--bg)) padding-box,var(--rb) border-box;animation:spin 3s linear infinite}
+.day.star{padding:7px}
+.day.star:hover,.row.star{--bg:var(--soft)}
+.row.star{padding:8px 6px 8px 14px}
 @keyframes spin{to{--a:360deg}}
-@media(prefers-reduced-motion:reduce){.day.star{animation:none}}
-.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.starbtn{width:44px;height:44px;flex:none;border-radius:9999px;background:var(--soft);font-size:22px;line-height:1}
-.starbtn[aria-pressed=true]{background:#ffd60a}
+@media(prefers-reduced-motion:reduce){.star{animation:none}}
+.startog input{display:none}
+.startog span{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:9999px;background:var(--soft);font-size:14px;font-weight:600;cursor:pointer}
+.startog input:checked+span{background:#ffd60a}
 .chip{font-size:11px;font-weight:600;background:var(--soft);border-radius:9999px;padding:1px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .chip.done{opacity:.45;text-decoration:line-through}
 .more{font-size:11px;color:var(--muted);padding-left:6px}
@@ -83,7 +90,9 @@ input[type=text],input[type=email],input[type=time],input[type=number],input[typ
 /* iOS: native date/time inputs ignore width unless appearance is reset */
 input[type=time],input[type=date]{-webkit-appearance:none;appearance:none;text-align:left}
 input::-webkit-date-and-time-value{text-align:left}
-input:focus{outline:2px solid var(--ink)}
+select{font:inherit;font-size:16px;font-weight:450;background:var(--field);border:0;border-radius:16px;padding:0 16px;height:48px;color:var(--ink);width:100%;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 22px) 21px,calc(100% - 16px) 21px;background-size:6px 6px;background-repeat:no-repeat}
+.hint{font-size:12px;font-weight:450;color:var(--muted)}
+input:focus,select:focus{outline:2px solid var(--ink)}
 input::placeholder{color:var(--faint)}
 .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
 .days{display:flex;gap:6px}
@@ -112,6 +121,13 @@ input[type=color]::-moz-color-swatch{border:1px solid var(--hl);border-radius:99
 .google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
 .google svg{background:#fff;border-radius:9999px;padding:2px;width:22px;height:22px}
 .or{text-align:center;font-size:12px;color:var(--muted);margin:16px 0 -4px}
+.someday{margin-top:48px}
+.someday .shead{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+.someday h2{font-size:32px}
+.someday .sub{margin:0}
+.lbl{font-size:14px;font-weight:600;margin:4px 0 8px}
+.pillsm{height:32px;padding:0 12px;border-radius:9999px;background:var(--canvas);font-size:13px;font-weight:600;white-space:nowrap}
+.pillsm:hover{background:var(--hl)}
 footer{text-align:center;margin-top:48px;font-size:12px}
 footer a{color:var(--faint)}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:9999px;padding:10px 18px;font-size:14px;font-weight:600;z-index:10}
@@ -146,16 +162,22 @@ footer a{color:var(--faint)}
     <button class="btn outline" id="addFixed">+ Routine</button>
     <button class="btn primary" id="addOnce">+ Event</button>
   </div>
+  <section class="someday">
+    <div class="shead"><h2>Someday.</h2><span class="sub" id="tdCount"></span></div>
+    <form id="tdForm" class="grow">
+      <input type="text" name="title" placeholder="Add a to-do with no date yet" required maxlength="60" aria-label="New to-do">
+      <button class="btn primary">Add</button>
+    </form>
+    <div class="list" id="tdList"></div>
+  </section>
 </main>
 <footer><a href="/privacy.html">Privacy</a></footer>
 
 <dialog id="dayDlg">
-  <div class="dhead">
-    <div><h2 id="dayTitle"></h2><p class="sub" id="daySub"></p></div>
-    <button class="starbtn" id="starBtn" aria-label="Mark as important" aria-pressed="false">☆</button>
-  </div>
+  <h2 id="dayTitle"></h2><p class="sub" id="daySub"></p>
   <div class="dial" id="dial"></div>
   <div class="list" id="list"></div>
+  <div id="dayTodos"></div>
   <div class="actions">
     <button class="btn outline" id="dayClose">Close</button>
     <button class="btn primary" id="dayAdd">+ Add event</button>
@@ -183,6 +205,18 @@ footer a{color:var(--faint)}
       </div>
     </div>
     <label class="f" id="onceF">Date<input type="date" name="date"></label>
+    <label class="f">Remind me
+      <select name="alarm">
+        <option value="">No reminder</option>
+        <option value="0">At start time</option>
+        <option value="5">5 min before</option>
+        <option value="10">10 min before</option>
+        <option value="30">30 min before</option>
+        <option value="60">1 hour before</option>
+      </select>
+      <small class="hint" id="alarmHint" hidden>On iPhone, reminders work after you add this site to your Home Screen (Share → Add to Home Screen) and open it from there.</small>
+    </label>
+    <label class="startog"><input type="checkbox" name="star"><span>★ Important</span></label>
     <div class="actions">
       <button type="button" class="btn outline" id="addCancel">Cancel</button>
       <button class="btn primary" id="addSubmit">Add</button>
@@ -239,7 +273,7 @@ const mins = t => +t.slice(0,2)*60 + +t.slice(3,5);
 const hm = m => `${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// state: fixed = recurring {id,title,start,dur,days,from,until,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; stars = {date:1}
+// state: fixed = recurring {id,title,start,dur,days,from,until,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; star:true on an item marks it (and its days) important; todos = undated {id,title,done}; alarm = minutes before start (null = none)
 // Supabase: paste Project URL + anon/publishable key (Settings → API). Empty = data stays in this browser only.
 // Never put the service_role key here.
 const SB_URL = 'https://htfzxxmkdqbpzqtxfoqj.supabase.co';
@@ -247,7 +281,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 // session is kept in localStorage and refreshed automatically, so users stay signed in until they sign out
 const sb = SB_URL && SB_KEY && window.supabase ? supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } }) : null;
 // a fresh object every time, so one user's items never leak into the next sign-in
-const empty = () => ({fixed:[], once:[], done:{}, groups:[], stars:{}});
+const empty = () => ({fixed:[], once:[], done:{}, groups:[], todos:[]});
 let S = empty(), user = null, syncTimer;
 const readLocal = k => { try { return JSON.parse(localStorage.getItem(k)); } catch {} };
 const localKey = () => 'monthdo' + (user ? ':' + user.id : '');
@@ -286,13 +320,42 @@ function renderMonth() {
   h += '<div class="day pad"></div>'.repeat(cur.getDay());
   for (let d = 1, n = new Date(y, m+1, 0).getDate(); d <= n; d++) {
     const ds = `${y}-${pad(m+1)}-${pad(d)}`, it = itemsOf(ds);
-    h += `<button class="day${ds === todayS ? ' today' : ''}${S.stars[ds] ? ' star' : ''}" data-d="${ds}"><span class="n">${d}</span>`
+    h += `<button class="day${ds === todayS ? ' today' : ''}${it.some(i => i.star) ? ' star' : ''}" data-d="${ds}"><span class="n">${d}</span>`
       + it.slice(0, 2).map(i => `<span class="chip${isDone(ds, i.id) ? ' done' : ''}"${chipStyle(i)}>${esc(i.title)}</span>`).join('')
       + (it.length > 2 ? `<span class="more">+${it.length - 2}</span>` : '')
       + `<span class="dots">${it.slice(0, 6).map(i => `<i class="dot${isDone(ds, i.id) ? ' done' : ''}"${grp(i.group) && !isDone(ds, i.id) ? ` style="background:${grp(i.group).color}"` : ''}></i>`).join('')}</span></button>`;
   }
   $('#grid').innerHTML = h;
+  renderTodos();
 }
+
+// someday to-dos: no date until scheduled; scheduling turns one into a normal event
+// ponytail: finished to-dos stay in the list until deleted; auto-clear them if the list gets long
+// short = day popup: just the name and "+ Today", so names have room
+const todoRow = (t, label, short) => `
+  <div class="row${t.done ? ' done' : ''}" data-tid="${t.id}">
+    ${short ? '' : `<input type="checkbox" ${t.done ? 'checked' : ''} aria-label="Done">`}
+    <div class="t"><b>${esc(t.title)}</b></div>
+    ${t.done ? '' : `<button class="pillsm" data-sched>${label}</button>`}
+    ${short ? '' : '<button class="x" aria-label="Delete">✕</button>'}
+  </div>`;
+function renderTodos() {
+  const open = S.todos.filter(t => !t.done);
+  $('#tdCount').textContent = open.length ? `${open.length} to do` : '';
+  $('#tdList').innerHTML = S.todos.length
+    ? [...open, ...S.todos.filter(t => t.done)].map(t => todoRow(t, 'Schedule')).join('')
+    : '<p class="empty">Things you need to do, but not on a set day.</p>';
+}
+let fromTodo = null;
+const onTodo = e => {
+  const r = e.target.closest('[data-tid]'); if (!r) return;
+  const t = S.todos.find(x => x.id === r.dataset.tid);
+  if (e.target.matches('[data-sched]')) { openAdd('once'); fromTodo = t.id; $('#form').title.value = t.title; return; }
+  if (e.target.matches('input')) t.done = e.target.checked;
+  else if (e.target.matches('.x')) S.todos = S.todos.filter(x => x !== t);
+  else return;
+  save(); refresh();
+};
 
 // 24h dial: 00:00 at top, clockwise; overlapping items go on inner lanes
 function renderDial(it) {
@@ -329,16 +392,16 @@ function renderDay() {
   const it = itemsOf(selDate), d = new Date(selDate + 'T00:00');
   $('#dayTitle').textContent = `${MON[d.getMonth()].slice(0,3)} ${d.getDate()}.`;
   $('#daySub').textContent = d.toLocaleDateString('en-US', {weekday:'long'});
-  $('#starBtn').textContent = S.stars[selDate] ? '★' : '☆';
-  $('#starBtn').setAttribute('aria-pressed', !!S.stars[selDate]);
   renderDial(it);
   $('#list').innerHTML = it.length ? it.map(i => `
-    <div class="row${i.id === selId ? ' sel' : ''}${isDone(selDate, i.id) ? ' done' : ''}" data-id="${i.id}">
+    <div class="row${i.id === selId ? ' sel' : ''}${isDone(selDate, i.id) ? ' done' : ''}${i.star ? ' star' : ''}" data-id="${i.id}">
       <input type="checkbox" ${isDone(selDate, i.id) ? 'checked' : ''} aria-label="Done">
       <i class="gdot"${grp(i.group) ? ` style="background:${grp(i.group).color}"` : ''}></i>
-      <div class="t"><b>${esc(i.title)}</b><span>${i.start}–${hm(mins(i.start) + i.dur)}${i.fixed ? ' · Routine' : ''}${grp(i.group) ? ' · ' + esc(grp(i.group).name) : ''}</span></div>
+      <div class="t"><b>${esc(i.title)}</b><span>${i.start}–${hm(mins(i.start) + i.dur)}${i.fixed ? ' · Routine' : ''}${i.alarm != null ? ' · 🔔' : ''}${grp(i.group) ? ' · ' + esc(grp(i.group).name) : ''}</span></div>
       <button class="x" aria-label="Delete">✕</button>
     </div>`).join('') : '<p class="empty">Nothing planned.</p>';
+  const td = S.todos.filter(t => !t.done);
+  $('#dayTodos').innerHTML = td.length ? `<p class="lbl">Fit one in today?</p><div class="list">${td.map(t => todoRow(t, '+ Today', true)).join('')}</div>` : '';
 }
 
 const refresh = () => { renderMonth(); if ($('#dayDlg').open) renderDay(); };
@@ -351,7 +414,6 @@ $('#grid').onclick = e => {
   const b = e.target.closest('[data-d]'); if (!b) return;
   selDate = b.dataset.d; selId = null; renderDay(); $('#dayDlg').showModal();
 };
-$('#starBtn').onclick = () => { S.stars[selDate] ? delete S.stars[selDate] : S.stars[selDate] = 1; save(); refresh(); };
 $('#dayClose').onclick = () => $('#dayDlg').close();
 $('#dayDlg').onclick = e => { if (e.target.id === 'dayDlg') e.target.close(); };
 
@@ -389,7 +451,7 @@ function askDeleteRoutine(f) {
 }
 
 function openAdd(type, it) {
-  addType = type; editId = it?.id || null;
+  addType = type; editId = it?.id || null; fromTodo = null;
   $('#addTitle').textContent = (it ? 'Edit ' : 'New ') + (type === 'fixed' ? 'routine.' : 'event.');
   $('#addSub').textContent = type === 'fixed'
     ? (it ? 'Changes apply to every day it repeats.' : 'Repeats at the same time on the chosen weekdays.')
@@ -406,7 +468,7 @@ function openAdd(type, it) {
   $('#form').until.value = ymd(new Date(cur.getFullYear(), cur.getMonth() + 1, 0));
   if (it) {
     const f = $('#form');
-    f.title.value = it.title; f.start.value = it.start;
+    f.title.value = it.title; f.start.value = it.start; f.star.checked = !!it.star; f.alarm.value = it.alarm ?? '';
     f.end.value = hm(Math.min(mins(it.start) + it.dur, 1439)); gap = it.dur;
     const g = f.querySelector(`[name=group][value="${it.group || ''}"]`);
     if (g) g.checked = true;
@@ -417,6 +479,13 @@ function openAdd(type, it) {
   }
   $('#addDlg').showModal();
 }
+$('#tdList').onclick = $('#dayTodos').onclick = onTodo;
+$('#tdForm').onsubmit = e => {
+  e.preventDefault();
+  const title = e.target.title.value.trim(); if (!title) return;
+  S.todos.push({ id: uid(), title });
+  save(); e.target.reset(); renderTodos();
+};
 $('#addFixed').onclick = () => openAdd('fixed');
 $('#addOnce').onclick = () => openAdd('once');
 $('#dayAdd').onclick = () => openAdd('once');
@@ -438,8 +507,9 @@ $('#fixedF .days').innerHTML = DOW.map((d, i) => `<label><input type="checkbox" 
 const upsert = (list, item) => { const i = list.findIndex(x => x.id === item.id); i < 0 ? list.push(item) : list[i] = item; };
 $('#form').onsubmit = e => {
   e.preventDefault();
-  const f = e.target, base = { id: editId || uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null };
+  const f = e.target, base = { id: editId || uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null, star: f.star.checked, alarm: f.alarm.value === '' ? null : +f.alarm.value };
   if (base.dur <= 0) return alert('End time must be after start time.');
+  if (base.alarm != null) enablePush(); // must start inside the tap so iOS shows the permission prompt
   if (addType === 'fixed') {
     const days = [...f.querySelectorAll('.days input:checked')].map(i => +i.value);
     if (!days.length) return alert('Pick at least one weekday.');
@@ -449,6 +519,7 @@ $('#form').onsubmit = e => {
   } else {
     if (!f.date.value) return;
     upsert(S.once, { ...base, date: f.date.value });
+    if (fromTodo) S.todos = S.todos.filter(t => t.id !== fromTodo); // scheduled, so it leaves Someday
   }
   save(); $('#addDlg').close(); refresh();
 };
@@ -516,8 +587,34 @@ $('#loginForm').onsubmit = async e => {
   }
   btn.disabled = false;
 };
+// reminders: the send-alarms function (supabase/functions) pushes to every device saved in push_subs
+const VAPID = 'BA4jzTzkSfQQILWNaEfCF1l1ieb2gVffeyu2kUVWjEMlhiPo7TSjVh92QxnhhXXc87tJ18kREFON5nMsBAjVkz4';
+const canPush = 'serviceWorker' in navigator && 'PushManager' in window;
+if (canPush) navigator.serviceWorker.register('/sw.js').catch(() => {});
+// iPhone Safari only gets PushManager once the site is opened from the Home Screen
+$('#alarmHint').hidden = canPush || !/iPhone|iPad/.test(navigator.userAgent);
+async function enablePush() {
+  if (!canPush || !user) return;
+  if (await Notification.requestPermission() !== 'granted') return toast('Reminders are off. Allow notifications for this site.');
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const key = Uint8Array.from(atob(VAPID.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+    const { error } = await sb.from('push_subs').upsert({ endpoint: sub.endpoint, sub: sub.toJSON(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone });
+    if (error) throw error;
+  } catch { toast('Couldn’t turn on reminders on this device.'); }
+}
+// stop this device's reminders so the next person signing in here doesn't get them
+async function disablePush() {
+  try {
+    const s = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
+    if (s) { await sb.from('push_subs').delete().eq('endpoint', s.endpoint); await s.unsubscribe(); }
+  } catch {}
+}
+
 $('#signOut').onclick = async () => {
   try { localStorage.removeItem(localKey()); } catch {} // don't leave this user's planner on a shared device
+  if (canPush) await disablePush();
   await sb.auth.signOut();
   start(null);
 };
