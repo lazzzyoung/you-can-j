@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0] - 2026-11-08
+### Added
+- Delete a routine from just one day or from every day.
+- Star important days; starred days get a rotating rainbow border on the calendar.
+- Routines have a From/Until date range (defaults to the month on screen; empty Until = no end).
+- Tap an event or routine in the day list to edit it.
+
+### Changed
+- End time now defaults to the start time, so +10m/+30m/+1h add up from the start.
+- Renamed the app from month.do to You can J.
+
+### Fixed
+- After signing out, the next user on the same browser could start with the previous user's items.
+
 ## [0.4.0] - 2026-11-02
 Baseline imported into git. Versions below 0.4.0 were built before the repository existed and are recorded here from the feedback rounds.
 
