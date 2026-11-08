@@ -40,6 +40,15 @@ main{max-width:960px;margin:0 auto}
 .day.pad{border:0;pointer-events:none}
 .day .n{font-size:14px;font-weight:600;width:26px;height:26px;display:grid;place-items:center;border-radius:9999px}
 .day.today .n{background:var(--ink);color:#fff}
+/* starred day: rainbow border that slowly rotates */
+@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+.day.star{border:2px solid transparent;padding:7px;--rb:conic-gradient(from var(--a),#ff595e,#ffca3a,#8ac926,#1982c4,#6a4c93,#ff595e);background:linear-gradient(var(--canvas),var(--canvas)) padding-box,var(--rb) border-box;animation:spin 3s linear infinite}
+.day.star:hover{background:linear-gradient(var(--soft),var(--soft)) padding-box,var(--rb) border-box}
+@keyframes spin{to{--a:360deg}}
+@media(prefers-reduced-motion:reduce){.day.star{animation:none}}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.starbtn{width:44px;height:44px;flex:none;border-radius:9999px;background:var(--soft);font-size:22px;line-height:1}
+.starbtn[aria-pressed=true]{background:#ffd60a}
 .chip{font-size:11px;font-weight:600;background:var(--soft);border-radius:9999px;padding:1px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .chip.done{opacity:.45;text-decoration:line-through}
 .more{font-size:11px;color:var(--muted);padding-left:6px}
@@ -109,6 +118,7 @@ footer a{color:var(--faint)}
 @media(max-width:640px){
   .head h1{font-size:32px}
   .day{min-height:64px;padding:4px;border-radius:12px}
+  .day.star{padding:3px}
   .chip{display:none}
   .day .dots{display:flex;gap:3px;flex-wrap:wrap;padding-left:3px}
   .dot{width:5px;height:5px;border-radius:9999px;background:var(--ink)}
@@ -140,8 +150,10 @@ footer a{color:var(--faint)}
 <footer><a href="/privacy.html">Privacy</a></footer>
 
 <dialog id="dayDlg">
-  <h2 id="dayTitle"></h2>
-  <p class="sub" id="daySub"></p>
+  <div class="dhead">
+    <div><h2 id="dayTitle"></h2><p class="sub" id="daySub"></p></div>
+    <button class="starbtn" id="starBtn" aria-label="Mark as important" aria-pressed="false">☆</button>
+  </div>
   <div class="dial" id="dial"></div>
   <div class="list" id="list"></div>
   <div class="actions">
@@ -223,7 +235,7 @@ const mins = t => +t.slice(0,2)*60 + +t.slice(3,5);
 const hm = m => `${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// state: fixed = recurring {id,title,start,dur,days,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}
+// state: fixed = recurring {id,title,start,dur,days,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; stars = {date:1}
 // Supabase: paste Project URL + anon/publishable key (Settings → API). Empty = data stays in this browser only.
 // Never put the service_role key here.
 const SB_URL = 'https://htfzxxmkdqbpzqtxfoqj.supabase.co';
@@ -231,7 +243,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 // session is kept in localStorage and refreshed automatically, so users stay signed in until they sign out
 const sb = SB_URL && SB_KEY && window.supabase ? supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } }) : null;
 // a fresh object every time, so one user's items never leak into the next sign-in
-const empty = () => ({fixed:[], once:[], done:{}, groups:[]});
+const empty = () => ({fixed:[], once:[], done:{}, groups:[], stars:{}});
 let S = empty(), user = null, syncTimer;
 const readLocal = k => { try { return JSON.parse(localStorage.getItem(k)); } catch {} };
 const localKey = () => 'monthdo' + (user ? ':' + user.id : '');
@@ -270,7 +282,7 @@ function renderMonth() {
   h += '<div class="day pad"></div>'.repeat(cur.getDay());
   for (let d = 1, n = new Date(y, m+1, 0).getDate(); d <= n; d++) {
     const ds = `${y}-${pad(m+1)}-${pad(d)}`, it = itemsOf(ds);
-    h += `<button class="day${ds === todayS ? ' today' : ''}" data-d="${ds}"><span class="n">${d}</span>`
+    h += `<button class="day${ds === todayS ? ' today' : ''}${S.stars[ds] ? ' star' : ''}" data-d="${ds}"><span class="n">${d}</span>`
       + it.slice(0, 2).map(i => `<span class="chip${isDone(ds, i.id) ? ' done' : ''}"${chipStyle(i)}>${esc(i.title)}</span>`).join('')
       + (it.length > 2 ? `<span class="more">+${it.length - 2}</span>` : '')
       + `<span class="dots">${it.slice(0, 6).map(i => `<i class="dot${isDone(ds, i.id) ? ' done' : ''}"${grp(i.group) && !isDone(ds, i.id) ? ` style="background:${grp(i.group).color}"` : ''}></i>`).join('')}</span></button>`;
@@ -313,6 +325,8 @@ function renderDay() {
   const it = itemsOf(selDate), d = new Date(selDate + 'T00:00');
   $('#dayTitle').textContent = `${MON[d.getMonth()].slice(0,3)} ${d.getDate()}.`;
   $('#daySub').textContent = d.toLocaleDateString('en-US', {weekday:'long'});
+  $('#starBtn').textContent = S.stars[selDate] ? '★' : '☆';
+  $('#starBtn').setAttribute('aria-pressed', !!S.stars[selDate]);
   renderDial(it);
   $('#list').innerHTML = it.length ? it.map(i => `
     <div class="row${i.id === selId ? ' sel' : ''}${isDone(selDate, i.id) ? ' done' : ''}" data-id="${i.id}">
@@ -333,6 +347,7 @@ $('#grid').onclick = e => {
   const b = e.target.closest('[data-d]'); if (!b) return;
   selDate = b.dataset.d; selId = null; renderDay(); $('#dayDlg').showModal();
 };
+$('#starBtn').onclick = () => { S.stars[selDate] ? delete S.stars[selDate] : S.stars[selDate] = 1; save(); refresh(); };
 $('#dayClose').onclick = () => $('#dayDlg').close();
 $('#dayDlg').onclick = e => { if (e.target.id === 'dayDlg') e.target.close(); };
 
