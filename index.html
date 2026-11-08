@@ -17,6 +17,8 @@
 :root{--ink:#141414;--canvas:#fff;--soft:#f3f3f3;--field:#f0f0f0;--hl-soft:#f0f0f0;--hl:#e0e0e0;--muted:#707070;--faint:#adadad}
 *{box-sizing:border-box;margin:0}
 [hidden]{display:none!important}
+/* no double-tap zoom on quick taps (+10m etc.); pinch zoom still works */
+html,button,label,input,select{touch-action:manipulation}
 body{font:450 16px/1.38 Inter,-apple-system,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--canvas);padding:16px 16px 80px}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 h1,h2{font-weight:650;line-height:1.13}
@@ -53,9 +55,14 @@ main{max-width:960px;margin:0 auto}
 .row.star{padding:8px 6px 8px 14px}
 @keyframes spin{to{--a:360deg}}
 @media(prefers-reduced-motion:reduce){.star{animation:none}}
-.startog input{display:none}
-.startog span{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:9999px;background:var(--soft);font-size:14px;font-weight:600;cursor:pointer}
-.startog input:checked+span{background:#ffd60a}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.starbtn{position:relative;flex:none;cursor:pointer}
+.starbtn input{position:absolute;opacity:0;width:0;height:0}
+.starbtn span{display:grid;place-items:center;width:44px;height:44px;border-radius:9999px;background:var(--soft);font-size:22px;line-height:1}
+.starbtn span::before{content:"☆"}
+.starbtn input:checked+span{background:#ffd60a}
+.starbtn input:checked+span::before{content:"★"}
+.starbtn input:focus-visible+span{outline:2px solid var(--ink)}
 .chip{font-size:11px;font-weight:600;background:var(--soft);border-radius:9999px;padding:1px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .chip.done{opacity:.45;text-decoration:line-through}
 .more{font-size:11px;color:var(--muted);padding-left:6px}
@@ -185,7 +192,11 @@ footer a{color:var(--faint)}
 </dialog>
 
 <dialog id="addDlg">
-  <h2 id="addTitle"></h2>
+  <div class="dhead">
+    <h2 id="addTitle"></h2>
+    <!-- form="form" keeps it part of the form (f.star, reset) while sitting in the header -->
+    <label class="starbtn"><input type="checkbox" name="star" form="form" aria-label="Important"><span aria-hidden="true"></span></label>
+  </div>
   <p class="sub" id="addSub"></p>
   <form id="form">
     <label class="f">Name<input type="text" name="title" placeholder="e.g. Workout" required maxlength="40"></label>
@@ -216,7 +227,6 @@ footer a{color:var(--faint)}
       </select>
       <small class="hint" id="alarmHint" hidden>On iPhone, reminders work after you add this site to your Home Screen (Share → Add to Home Screen) and open it from there.</small>
     </label>
-    <label class="startog"><input type="checkbox" name="star"><span>★ Important</span></label>
     <div class="actions">
       <button type="button" class="btn outline" id="addCancel">Cancel</button>
       <button class="btn primary" id="addSubmit">Add</button>
