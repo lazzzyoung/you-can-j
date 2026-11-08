@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>month.do</title>
+<title>You can J</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
@@ -40,6 +40,15 @@ main{max-width:960px;margin:0 auto}
 .day.pad{border:0;pointer-events:none}
 .day .n{font-size:14px;font-weight:600;width:26px;height:26px;display:grid;place-items:center;border-radius:9999px}
 .day.today .n{background:var(--ink);color:#fff}
+/* starred day: rainbow border that slowly rotates */
+@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+.day.star{border:2px solid transparent;padding:7px;--rb:conic-gradient(from var(--a),#ff595e,#ffca3a,#8ac926,#1982c4,#6a4c93,#ff595e);background:linear-gradient(var(--canvas),var(--canvas)) padding-box,var(--rb) border-box;animation:spin 3s linear infinite}
+.day.star:hover{background:linear-gradient(var(--soft),var(--soft)) padding-box,var(--rb) border-box}
+@keyframes spin{to{--a:360deg}}
+@media(prefers-reduced-motion:reduce){.day.star{animation:none}}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.starbtn{width:44px;height:44px;flex:none;border-radius:9999px;background:var(--soft);font-size:22px;line-height:1}
+.starbtn[aria-pressed=true]{background:#ffd60a}
 .chip{font-size:11px;font-weight:600;background:var(--soft);border-radius:9999px;padding:1px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .chip.done{opacity:.45;text-decoration:line-through}
 .more{font-size:11px;color:var(--muted);padding-left:6px}
@@ -109,6 +118,7 @@ footer a{color:var(--faint)}
 @media(max-width:640px){
   .head h1{font-size:32px}
   .day{min-height:64px;padding:4px;border-radius:12px}
+  .day.star{padding:3px}
   .chip{display:none}
   .day .dots{display:flex;gap:3px;flex-wrap:wrap;padding-left:3px}
   .dot{width:5px;height:5px;border-radius:9999px;background:var(--ink)}
@@ -120,7 +130,7 @@ footer a{color:var(--faint)}
 </head>
 <body>
 <nav>
-  <b>month.do</b>
+  <b>You can J</b>
   <button class="btn soft" id="openGroups">Groups</button>
   <button class="btn outline" id="signOut" hidden>Sign out</button>
 </nav>
@@ -140,8 +150,10 @@ footer a{color:var(--faint)}
 <footer><a href="/privacy.html">Privacy</a></footer>
 
 <dialog id="dayDlg">
-  <h2 id="dayTitle"></h2>
-  <p class="sub" id="daySub"></p>
+  <div class="dhead">
+    <div><h2 id="dayTitle"></h2><p class="sub" id="daySub"></p></div>
+    <button class="starbtn" id="starBtn" aria-label="Mark as important" aria-pressed="false">☆</button>
+  </div>
   <div class="dial" id="dial"></div>
   <div class="list" id="list"></div>
   <div class="actions">
@@ -157,7 +169,7 @@ footer a{color:var(--faint)}
     <label class="f">Name<input type="text" name="title" placeholder="e.g. Workout" required maxlength="40"></label>
     <div class="two">
       <label class="f">Start<input type="time" name="start" value="07:00" required></label>
-      <label class="f">End<input type="time" name="end" value="07:15" required></label>
+      <label class="f">End<input type="time" name="end" value="07:00" required></label>
     </div>
     <div class="quick"><button type="button" data-add="10">+10m</button><button type="button" data-add="30">+30m</button><button type="button" data-add="60">+1h</button></div>
     <div class="f"><span style="font-size:14px;font-weight:600">Group</span>
@@ -165,12 +177,26 @@ footer a{color:var(--faint)}
     </div>
     <div id="fixedF" class="f"><span style="font-size:14px;font-weight:600">Repeat on</span>
       <div class="days" style="margin-top:4px"></div>
+      <div class="two" style="margin-top:12px">
+        <label class="f">From<input type="date" name="from"></label>
+        <label class="f">Until<input type="date" name="until"></label>
+      </div>
     </div>
     <label class="f" id="onceF">Date<input type="date" name="date"></label>
     <div class="actions">
       <button type="button" class="btn outline" id="addCancel">Cancel</button>
-      <button class="btn primary">Add</button>
+      <button class="btn primary" id="addSubmit">Add</button>
     </div>
+  </form>
+</dialog>
+
+<dialog id="delDlg">
+  <h2>Delete routine.</h2>
+  <p class="sub">Remove just this day, or every day it repeats?</p>
+  <form method="dialog" class="actions" style="flex-direction:column">
+    <button class="btn primary" value="one">Only this day</button>
+    <button class="btn outline" value="all">All days</button>
+    <button class="btn soft" value="">Cancel</button>
   </form>
 </dialog>
 
@@ -213,15 +239,16 @@ const mins = t => +t.slice(0,2)*60 + +t.slice(3,5);
 const hm = m => `${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// state: fixed = recurring {id,title,start,dur,days,from}; once = {id,date,title,start,dur}; done = {"date|id":1}
+// state: fixed = recurring {id,title,start,dur,days,from,until,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; stars = {date:1}
 // Supabase: paste Project URL + anon/publishable key (Settings → API). Empty = data stays in this browser only.
 // Never put the service_role key here.
 const SB_URL = 'https://htfzxxmkdqbpzqtxfoqj.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Znp4eG1rZHFicHpxdHhmb3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1OTczMzQsImV4cCI6MjEwOTE3MzMzNH0.ZpEI5OaEmD9FJQtaQUhTd7Sz8yyfFAo82R1zddmyQMk';
 // session is kept in localStorage and refreshed automatically, so users stay signed in until they sign out
 const sb = SB_URL && SB_KEY && window.supabase ? supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } }) : null;
-const EMPTY = {fixed:[], once:[], done:{}, groups:[]};
-let S = {...EMPTY}, user = null, syncTimer;
+// a fresh object every time, so one user's items never leak into the next sign-in
+const empty = () => ({fixed:[], once:[], done:{}, groups:[], stars:{}});
+let S = empty(), user = null, syncTimer;
 const readLocal = k => { try { return JSON.parse(localStorage.getItem(k)); } catch {} };
 const localKey = () => 'monthdo' + (user ? ':' + user.id : '');
 const toast = msg => { const t = $('#toast'); t.textContent = msg; t.hidden = false; setTimeout(() => t.hidden = true, 3000); };
@@ -237,12 +264,12 @@ const save = () => {
 };
 
 let cur = new Date(); cur.setDate(1);
-let selDate = null, selId = null, addType = 'once';
+let selDate = null, selId = null, addType = 'once', editId = null;
 
 const itemsOf = ds => {
   const dow = new Date(ds + 'T00:00').getDay();
   return [
-    ...S.fixed.filter(f => f.days.includes(dow)).map(f => ({...f, fixed:true})),
+    ...S.fixed.filter(f => f.days.includes(dow) && (!f.from || f.from <= ds) && (!f.until || ds <= f.until) && !f.skip?.includes(ds)).map(f => ({...f, fixed:true})),
     ...S.once.filter(o => o.date === ds)
   ].sort((a, b) => a.start.localeCompare(b.start));
 };
@@ -259,7 +286,7 @@ function renderMonth() {
   h += '<div class="day pad"></div>'.repeat(cur.getDay());
   for (let d = 1, n = new Date(y, m+1, 0).getDate(); d <= n; d++) {
     const ds = `${y}-${pad(m+1)}-${pad(d)}`, it = itemsOf(ds);
-    h += `<button class="day${ds === todayS ? ' today' : ''}" data-d="${ds}"><span class="n">${d}</span>`
+    h += `<button class="day${ds === todayS ? ' today' : ''}${S.stars[ds] ? ' star' : ''}" data-d="${ds}"><span class="n">${d}</span>`
       + it.slice(0, 2).map(i => `<span class="chip${isDone(ds, i.id) ? ' done' : ''}"${chipStyle(i)}>${esc(i.title)}</span>`).join('')
       + (it.length > 2 ? `<span class="more">+${it.length - 2}</span>` : '')
       + `<span class="dots">${it.slice(0, 6).map(i => `<i class="dot${isDone(ds, i.id) ? ' done' : ''}"${grp(i.group) && !isDone(ds, i.id) ? ` style="background:${grp(i.group).color}"` : ''}></i>`).join('')}</span></button>`;
@@ -302,6 +329,8 @@ function renderDay() {
   const it = itemsOf(selDate), d = new Date(selDate + 'T00:00');
   $('#dayTitle').textContent = `${MON[d.getMonth()].slice(0,3)} ${d.getDate()}.`;
   $('#daySub').textContent = d.toLocaleDateString('en-US', {weekday:'long'});
+  $('#starBtn').textContent = S.stars[selDate] ? '★' : '☆';
+  $('#starBtn').setAttribute('aria-pressed', !!S.stars[selDate]);
   renderDial(it);
   $('#list').innerHTML = it.length ? it.map(i => `
     <div class="row${i.id === selId ? ' sel' : ''}${isDone(selDate, i.id) ? ' done' : ''}" data-id="${i.id}">
@@ -322,6 +351,7 @@ $('#grid').onclick = e => {
   const b = e.target.closest('[data-d]'); if (!b) return;
   selDate = b.dataset.d; selId = null; renderDay(); $('#dayDlg').showModal();
 };
+$('#starBtn').onclick = () => { S.stars[selDate] ? delete S.stars[selDate] : S.stars[selDate] = 1; save(); refresh(); };
 $('#dayClose').onclick = () => $('#dayDlg').close();
 $('#dayDlg').onclick = e => { if (e.target.id === 'dayDlg') e.target.close(); };
 
@@ -335,23 +365,56 @@ $('#list').onclick = e => {
   if (e.target.matches('input')) { e.target.checked ? S.done[selDate + '|' + id] = 1 : delete S.done[selDate + '|' + id]; save(); return refresh(); }
   if (e.target.matches('.x')) {
     const f = S.fixed.find(f => f.id === id);
-    if (f && !confirm('This routine will be removed from every day. Delete?')) return;
-    S.fixed = S.fixed.filter(f => f.id !== id); S.once = S.once.filter(o => o.id !== id);
+    if (f) return askDeleteRoutine(f);
+    S.once = S.once.filter(o => o.id !== id);
     if (selId === id) selId = null; save(); return refresh();
   }
-  selId = selId === id ? null : id; renderDay();
+  // tapping a row opens it for editing
+  const it = S.fixed.find(x => x.id === id) || S.once.find(x => x.id === id);
+  if (it) openAdd(S.fixed.includes(it) ? 'fixed' : 'once', it);
 };
 
-function openAdd(type) {
-  addType = type;
-  $('#addTitle').textContent = type === 'fixed' ? 'New routine.' : 'New event.';
-  $('#addSub').textContent = type === 'fixed' ? 'Repeats at the same time on the chosen weekdays.' : 'A one-time event on a single day.';
+// routine delete: skip just this date, or remove the routine everywhere
+function askDeleteRoutine(f) {
+  const d = $('#delDlg');
+  d.returnValue = '';
+  d.onclose = () => {
+    if (d.returnValue === 'one') (f.skip ||= []).push(selDate);
+    else if (d.returnValue === 'all') S.fixed = S.fixed.filter(x => x !== f);
+    else return;
+    if (selId === f.id) selId = null;
+    save(); refresh();
+  };
+  d.showModal();
+}
+
+function openAdd(type, it) {
+  addType = type; editId = it?.id || null;
+  $('#addTitle').textContent = (it ? 'Edit ' : 'New ') + (type === 'fixed' ? 'routine.' : 'event.');
+  $('#addSub').textContent = type === 'fixed'
+    ? (it ? 'Changes apply to every day it repeats.' : 'Repeats at the same time on the chosen weekdays.')
+    : 'A one-time event on a single day.';
+  $('#addSubmit').textContent = it ? 'Save' : 'Add';
   $('#fixedF').hidden = type !== 'fixed';
   $('#onceF').hidden = type === 'fixed';
-  $('#form').reset(); gap = 15;
+  $('#form').reset(); gap = 0;
   $('#groupPick').innerHTML = [{id:'', name:'None', color:''}, ...S.groups].map((g, k) =>
     `<label><input type="radio" name="group" value="${g.id}"${k ? '' : ' checked'}><span>${g.id ? `<i class="gdot" style="background:${g.color}"></i>` : ''}${esc(g.name)}</span></label>`).join('');
   $('#form').date.value = selDate && $('#dayDlg').open ? selDate : ymd(new Date());
+  // routines default to the month on screen; clearing Until means no end date
+  $('#form').from.value = ymd(new Date(cur.getFullYear(), cur.getMonth(), 1));
+  $('#form').until.value = ymd(new Date(cur.getFullYear(), cur.getMonth() + 1, 0));
+  if (it) {
+    const f = $('#form');
+    f.title.value = it.title; f.start.value = it.start;
+    f.end.value = hm(Math.min(mins(it.start) + it.dur, 1439)); gap = it.dur;
+    const g = f.querySelector(`[name=group][value="${it.group || ''}"]`);
+    if (g) g.checked = true;
+    if (type === 'fixed') {
+      f.querySelectorAll('.days input').forEach(i => i.checked = it.days.includes(+i.value));
+      f.from.value = it.from || ''; f.until.value = it.until || '';
+    } else f.date.value = it.date;
+  }
   $('#addDlg').showModal();
 }
 $('#addFixed').onclick = () => openAdd('fixed');
@@ -360,7 +423,7 @@ $('#dayAdd').onclick = () => openAdd('once');
 $('#addCancel').onclick = () => $('#addDlg').close();
 
 // end time: moving start keeps the same length; quick buttons push the end later (capped at 23:59)
-let gap = 15;
+let gap = 0;
 const setEnd = m => { const f = $('#form'); f.end.value = hm(Math.min(m, 1439)); gap = mins(f.end.value) - mins(f.start.value); };
 $('#form').start.oninput = e => { if (e.target.value) setEnd(mins(e.target.value) + gap); };
 $('#form').end.oninput = e => { if (e.target.value) gap = mins(e.target.value) - mins($('#form').start.value); };
@@ -371,17 +434,21 @@ $('.quick').onclick = e => {
 
 $('#fixedF .days').innerHTML = DOW.map((d, i) => `<label><input type="checkbox" value="${i}" checked><span>${d}</span></label>`).join('');
 
+// replace the item being edited, or add a new one
+const upsert = (list, item) => { const i = list.findIndex(x => x.id === item.id); i < 0 ? list.push(item) : list[i] = item; };
 $('#form').onsubmit = e => {
   e.preventDefault();
-  const f = e.target, base = { id: uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null };
+  const f = e.target, base = { id: editId || uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null };
   if (base.dur <= 0) return alert('End time must be after start time.');
   if (addType === 'fixed') {
     const days = [...f.querySelectorAll('.days input:checked')].map(i => +i.value);
     if (!days.length) return alert('Pick at least one weekday.');
-    S.fixed.push({ ...base, days });
+    const from = f.from.value || null, until = f.until.value || null;
+    if (from && until && until < from) return alert('Until must be on or after From.');
+    upsert(S.fixed, { ...base, days, from, until, skip: S.fixed.find(x => x.id === editId)?.skip });
   } else {
     if (!f.date.value) return;
-    S.once.push({ ...base, date: f.date.value });
+    upsert(S.once, { ...base, date: f.date.value });
   }
   save(); $('#addDlg').close(); refresh();
 };
@@ -458,14 +525,14 @@ $('#signOut').onclick = async () => {
 async function start(session) {
   user = session?.user || null;
   $('#signOut').hidden = !user;
-  S = {...EMPTY};
+  S = empty();
   if (sb && !user) { renderMonth(); resetLogin(); return $('#loginDlg').showModal(); }
-  S = {...EMPTY, ...readLocal(localKey())};
+  S = {...empty(), ...readLocal(localKey())};
   if (user) {
     const { data, error } = await sb.from('planner').select('data').maybeSingle();
     if (error) toast('Offline. Showing data saved on this device.');
-    else if (data) S = {...EMPTY, ...data.data};
-    else { S = {...EMPTY, ...readLocal('monthdo')}; save(); } // first sign-in: upload what was planned before login
+    else if (data) S = {...empty(), ...data.data};
+    else { S = {...empty(), ...readLocal('monthdo')}; save(); } // first sign-in: upload what was planned before login
   }
   renderMonth();
 }

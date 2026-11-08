@@ -1,4 +1,4 @@
-# month.do
+# You can J
 
 A simple monthly planner: a month calendar, one-off events, weekly routines, color groups, and a 24-hour dial for each day. Plain HTML, synced with Supabase, hosted on Vercel.
 

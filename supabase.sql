@@ -1,4 +1,4 @@
--- month.do: run once in Supabase → SQL Editor
+-- You can J: run once in Supabase → SQL Editor
 -- One row per user holding the whole planner as JSON. RLS: each user can only touch their own row.
 create table public.planner (
   user_id uuid primary key default auth.uid() references auth.users on delete cascade,
