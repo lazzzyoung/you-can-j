@@ -114,6 +114,13 @@ input[type=color]::-moz-color-swatch{border:1px solid var(--hl);border-radius:99
 .google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
 .google svg{background:#fff;border-radius:9999px;padding:2px;width:22px;height:22px}
 .or{text-align:center;font-size:12px;color:var(--muted);margin:16px 0 -4px}
+.someday{margin-top:48px}
+.someday .shead{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+.someday h2{font-size:32px}
+.someday .sub{margin:0}
+.lbl{font-size:14px;font-weight:600;margin:4px 0 8px}
+.pillsm{height:32px;padding:0 12px;border-radius:9999px;background:var(--canvas);font-size:13px;font-weight:600;white-space:nowrap}
+.pillsm:hover{background:var(--hl)}
 footer{text-align:center;margin-top:48px;font-size:12px}
 footer a{color:var(--faint)}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:9999px;padding:10px 18px;font-size:14px;font-weight:600;z-index:10}
@@ -148,6 +155,14 @@ footer a{color:var(--faint)}
     <button class="btn outline" id="addFixed">+ Routine</button>
     <button class="btn primary" id="addOnce">+ Event</button>
   </div>
+  <section class="someday">
+    <div class="shead"><h2>Someday.</h2><span class="sub" id="tdCount"></span></div>
+    <form id="tdForm" class="grow">
+      <input type="text" name="title" placeholder="Add a to-do with no date yet" required maxlength="60" aria-label="New to-do">
+      <button class="btn primary">Add</button>
+    </form>
+    <div class="list" id="tdList"></div>
+  </section>
 </main>
 <footer><a href="/privacy.html">Privacy</a></footer>
 
@@ -155,6 +170,7 @@ footer a{color:var(--faint)}
   <h2 id="dayTitle"></h2><p class="sub" id="daySub"></p>
   <div class="dial" id="dial"></div>
   <div class="list" id="list"></div>
+  <div id="dayTodos"></div>
   <div class="actions">
     <button class="btn outline" id="dayClose">Close</button>
     <button class="btn primary" id="dayAdd">+ Add event</button>
@@ -239,7 +255,7 @@ const mins = t => +t.slice(0,2)*60 + +t.slice(3,5);
 const hm = m => `${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// state: fixed = recurring {id,title,start,dur,days,from,until,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; star:true on an item marks it (and its days) important
+// state: fixed = recurring {id,title,start,dur,days,from,until,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; star:true on an item marks it (and its days) important; todos = undated {id,title,done}
 // Supabase: paste Project URL + anon/publishable key (Settings → API). Empty = data stays in this browser only.
 // Never put the service_role key here.
 const SB_URL = 'https://htfzxxmkdqbpzqtxfoqj.supabase.co';
@@ -247,7 +263,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 // session is kept in localStorage and refreshed automatically, so users stay signed in until they sign out
 const sb = SB_URL && SB_KEY && window.supabase ? supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } }) : null;
 // a fresh object every time, so one user's items never leak into the next sign-in
-const empty = () => ({fixed:[], once:[], done:{}, groups:[]});
+const empty = () => ({fixed:[], once:[], done:{}, groups:[], todos:[]});
 let S = empty(), user = null, syncTimer;
 const readLocal = k => { try { return JSON.parse(localStorage.getItem(k)); } catch {} };
 const localKey = () => 'monthdo' + (user ? ':' + user.id : '');
@@ -292,7 +308,36 @@ function renderMonth() {
       + `<span class="dots">${it.slice(0, 6).map(i => `<i class="dot${isDone(ds, i.id) ? ' done' : ''}"${grp(i.group) && !isDone(ds, i.id) ? ` style="background:${grp(i.group).color}"` : ''}></i>`).join('')}</span></button>`;
   }
   $('#grid').innerHTML = h;
+  renderTodos();
 }
+
+// someday to-dos: no date until scheduled; scheduling turns one into a normal event
+// ponytail: finished to-dos stay in the list until deleted; auto-clear them if the list gets long
+// short = day popup: just the name and "+ Today", so names have room
+const todoRow = (t, label, short) => `
+  <div class="row${t.done ? ' done' : ''}" data-tid="${t.id}">
+    ${short ? '' : `<input type="checkbox" ${t.done ? 'checked' : ''} aria-label="Done">`}
+    <div class="t"><b>${esc(t.title)}</b></div>
+    ${t.done ? '' : `<button class="pillsm" data-sched>${label}</button>`}
+    ${short ? '' : '<button class="x" aria-label="Delete">✕</button>'}
+  </div>`;
+function renderTodos() {
+  const open = S.todos.filter(t => !t.done);
+  $('#tdCount').textContent = open.length ? `${open.length} to do` : '';
+  $('#tdList').innerHTML = S.todos.length
+    ? [...open, ...S.todos.filter(t => t.done)].map(t => todoRow(t, 'Schedule')).join('')
+    : '<p class="empty">Things you need to do, but not on a set day.</p>';
+}
+let fromTodo = null;
+const onTodo = e => {
+  const r = e.target.closest('[data-tid]'); if (!r) return;
+  const t = S.todos.find(x => x.id === r.dataset.tid);
+  if (e.target.matches('[data-sched]')) { openAdd('once'); fromTodo = t.id; $('#form').title.value = t.title; return; }
+  if (e.target.matches('input')) t.done = e.target.checked;
+  else if (e.target.matches('.x')) S.todos = S.todos.filter(x => x !== t);
+  else return;
+  save(); refresh();
+};
 
 // 24h dial: 00:00 at top, clockwise; overlapping items go on inner lanes
 function renderDial(it) {
@@ -337,6 +382,8 @@ function renderDay() {
       <div class="t"><b>${esc(i.title)}</b><span>${i.start}–${hm(mins(i.start) + i.dur)}${i.fixed ? ' · Routine' : ''}${grp(i.group) ? ' · ' + esc(grp(i.group).name) : ''}</span></div>
       <button class="x" aria-label="Delete">✕</button>
     </div>`).join('') : '<p class="empty">Nothing planned.</p>';
+  const td = S.todos.filter(t => !t.done);
+  $('#dayTodos').innerHTML = td.length ? `<p class="lbl">Fit one in today?</p><div class="list">${td.map(t => todoRow(t, '+ Today', true)).join('')}</div>` : '';
 }
 
 const refresh = () => { renderMonth(); if ($('#dayDlg').open) renderDay(); };
@@ -386,7 +433,7 @@ function askDeleteRoutine(f) {
 }
 
 function openAdd(type, it) {
-  addType = type; editId = it?.id || null;
+  addType = type; editId = it?.id || null; fromTodo = null;
   $('#addTitle').textContent = (it ? 'Edit ' : 'New ') + (type === 'fixed' ? 'routine.' : 'event.');
   $('#addSub').textContent = type === 'fixed'
     ? (it ? 'Changes apply to every day it repeats.' : 'Repeats at the same time on the chosen weekdays.')
@@ -414,6 +461,13 @@ function openAdd(type, it) {
   }
   $('#addDlg').showModal();
 }
+$('#tdList').onclick = $('#dayTodos').onclick = onTodo;
+$('#tdForm').onsubmit = e => {
+  e.preventDefault();
+  const title = e.target.title.value.trim(); if (!title) return;
+  S.todos.push({ id: uid(), title });
+  save(); e.target.reset(); renderTodos();
+};
 $('#addFixed').onclick = () => openAdd('fixed');
 $('#addOnce').onclick = () => openAdd('once');
 $('#dayAdd').onclick = () => openAdd('once');
@@ -446,6 +500,7 @@ $('#form').onsubmit = e => {
   } else {
     if (!f.date.value) return;
     upsert(S.once, { ...base, date: f.date.value });
+    if (fromTodo) S.todos = S.todos.filter(t => t.id !== fromTodo); // scheduled, so it leaves Someday
   }
   save(); $('#addDlg').close(); refresh();
 };
