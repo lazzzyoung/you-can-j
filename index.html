@@ -177,6 +177,10 @@ footer a{color:var(--faint)}
     </div>
     <div id="fixedF" class="f"><span style="font-size:14px;font-weight:600">Repeat on</span>
       <div class="days" style="margin-top:4px"></div>
+      <div class="two" style="margin-top:12px">
+        <label class="f">From<input type="date" name="from"></label>
+        <label class="f">Until<input type="date" name="until"></label>
+      </div>
     </div>
     <label class="f" id="onceF">Date<input type="date" name="date"></label>
     <div class="actions">
@@ -235,7 +239,7 @@ const mins = t => +t.slice(0,2)*60 + +t.slice(3,5);
 const hm = m => `${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// state: fixed = recurring {id,title,start,dur,days,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; stars = {date:1}
+// state: fixed = recurring {id,title,start,dur,days,from,until,skip:[dates]}; once = {id,date,title,start,dur}; done = {"date|id":1}; stars = {date:1}
 // Supabase: paste Project URL + anon/publishable key (Settings → API). Empty = data stays in this browser only.
 // Never put the service_role key here.
 const SB_URL = 'https://htfzxxmkdqbpzqtxfoqj.supabase.co';
@@ -265,7 +269,7 @@ let selDate = null, selId = null, addType = 'once';
 const itemsOf = ds => {
   const dow = new Date(ds + 'T00:00').getDay();
   return [
-    ...S.fixed.filter(f => f.days.includes(dow) && !f.skip?.includes(ds)).map(f => ({...f, fixed:true})),
+    ...S.fixed.filter(f => f.days.includes(dow) && (!f.from || f.from <= ds) && (!f.until || ds <= f.until) && !f.skip?.includes(ds)).map(f => ({...f, fixed:true})),
     ...S.once.filter(o => o.date === ds)
   ].sort((a, b) => a.start.localeCompare(b.start));
 };
@@ -392,6 +396,9 @@ function openAdd(type) {
   $('#groupPick').innerHTML = [{id:'', name:'None', color:''}, ...S.groups].map((g, k) =>
     `<label><input type="radio" name="group" value="${g.id}"${k ? '' : ' checked'}><span>${g.id ? `<i class="gdot" style="background:${g.color}"></i>` : ''}${esc(g.name)}</span></label>`).join('');
   $('#form').date.value = selDate && $('#dayDlg').open ? selDate : ymd(new Date());
+  // routines default to the month on screen; clearing Until means no end date
+  $('#form').from.value = ymd(new Date(cur.getFullYear(), cur.getMonth(), 1));
+  $('#form').until.value = ymd(new Date(cur.getFullYear(), cur.getMonth() + 1, 0));
   $('#addDlg').showModal();
 }
 $('#addFixed').onclick = () => openAdd('fixed');
@@ -418,7 +425,9 @@ $('#form').onsubmit = e => {
   if (addType === 'fixed') {
     const days = [...f.querySelectorAll('.days input:checked')].map(i => +i.value);
     if (!days.length) return alert('Pick at least one weekday.');
-    S.fixed.push({ ...base, days });
+    const from = f.from.value || null, until = f.until.value || null;
+    if (from && until && until < from) return alert('Until must be on or after From.');
+    S.fixed.push({ ...base, days, from, until });
   } else {
     if (!f.date.value) return;
     S.once.push({ ...base, date: f.date.value });
