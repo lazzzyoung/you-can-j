@@ -169,7 +169,7 @@ footer a{color:var(--faint)}
     <label class="f">Name<input type="text" name="title" placeholder="e.g. Workout" required maxlength="40"></label>
     <div class="two">
       <label class="f">Start<input type="time" name="start" value="07:00" required></label>
-      <label class="f">End<input type="time" name="end" value="07:15" required></label>
+      <label class="f">End<input type="time" name="end" value="07:00" required></label>
     </div>
     <div class="quick"><button type="button" data-add="10">+10m</button><button type="button" data-add="30">+30m</button><button type="button" data-add="60">+1h</button></div>
     <div class="f"><span style="font-size:14px;font-weight:600">Group</span>
@@ -388,7 +388,7 @@ function openAdd(type) {
   $('#addSub').textContent = type === 'fixed' ? 'Repeats at the same time on the chosen weekdays.' : 'A one-time event on a single day.';
   $('#fixedF').hidden = type !== 'fixed';
   $('#onceF').hidden = type === 'fixed';
-  $('#form').reset(); gap = 15;
+  $('#form').reset(); gap = 0;
   $('#groupPick').innerHTML = [{id:'', name:'None', color:''}, ...S.groups].map((g, k) =>
     `<label><input type="radio" name="group" value="${g.id}"${k ? '' : ' checked'}><span>${g.id ? `<i class="gdot" style="background:${g.color}"></i>` : ''}${esc(g.name)}</span></label>`).join('');
   $('#form').date.value = selDate && $('#dayDlg').open ? selDate : ymd(new Date());
@@ -400,7 +400,7 @@ $('#dayAdd').onclick = () => openAdd('once');
 $('#addCancel').onclick = () => $('#addDlg').close();
 
 // end time: moving start keeps the same length; quick buttons push the end later (capped at 23:59)
-let gap = 15;
+let gap = 0;
 const setEnd = m => { const f = $('#form'); f.end.value = hm(Math.min(m, 1439)); gap = mins(f.end.value) - mins(f.start.value); };
 $('#form').start.oninput = e => { if (e.target.value) setEnd(mins(e.target.value) + gap); };
 $('#form').end.oninput = e => { if (e.target.value) gap = mins(e.target.value) - mins($('#form').start.value); };
