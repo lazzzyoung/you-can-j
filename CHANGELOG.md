@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.0] - 2026-11-08
+### Added
+- Star individual events and routines; starred items and the days that hold them get the rainbow border.
+- Someday list under the calendar for to-dos with no date. Schedule turns one into an event; the day popup offers open to-dos with "+ Today".
+- Push reminders: at start or 5/10/30/60 minutes before. The app can be added to the Home Screen (needed for reminders on iPhone).
+
+### Changed
+- The per-day star button is replaced by starring items.
+
 ## [0.5.0] - 2026-11-08
 ### Added
 - Delete a routine from just one day or from every day.
