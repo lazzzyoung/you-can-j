@@ -32,7 +32,7 @@ h1,h2{font-weight:650;line-height:1.13}
 .icon{width:44px;padding:0}
 
 nav{position:sticky;top:12px;z-index:5;max-width:960px;margin:0 auto 48px;background:var(--soft);border-radius:9999px;padding:6px 6px 6px 20px;display:flex;align-items:center;gap:8px}
-nav b{font-weight:650;flex:1}
+nav b{font-weight:650;flex:1;white-space:nowrap}
 nav .btn{height:40px}
 
 main{max-width:960px;margin:0 auto}
@@ -105,6 +105,9 @@ select{font:inherit;font-size:16px;font-weight:450;background:var(--field);borde
 select.lang{width:auto;height:32px;padding:0 30px 0 12px;border-radius:9999px;font-size:12px;font-weight:600;background-color:var(--soft);background-position:calc(100% - 18px) 13px,calc(100% - 13px) 13px;background-size:5px 5px}
 footer select.lang{vertical-align:middle;color:var(--muted);margin-left:2px}
 #loginDlg .dhead select.lang{margin-top:6px}
+.guestbtn{width:100%;margin-top:16px}
+html[lang=ko] body{word-break:keep-all}
+.guestbar{max-width:960px;margin:-36px auto 24px;text-align:center;font-size:13px;color:var(--muted)}
 .hint{font-size:12px;font-weight:450;color:var(--muted)}
 input:focus,select:focus{outline:2px solid var(--ink)}
 input::placeholder{color:var(--faint)}
@@ -119,6 +122,8 @@ input::placeholder{color:var(--faint)}
 .quick button{flex:1;white-space:nowrap;padding:0 6px;height:36px;border-radius:9999px;background:var(--soft);font-size:14px;font-weight:600}
 .actions{display:flex;gap:8px;margin-top:4px}
 .actions .btn{flex:1}
+.actions.col{flex-direction:column}
+.actions.col .btn{flex:none}
 
 .gdot{width:10px;height:10px;border-radius:9999px;flex:none;background:var(--hl)}
 .groups{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
@@ -164,7 +169,9 @@ footer a{color:var(--faint)}
   <b>You can J</b>
   <button class="btn soft" id="openGroups" data-i18n="groups">Groups</button>
   <button class="btn outline" id="signOut" data-i18n="signOut" hidden>Sign out</button>
+  <button class="btn primary" id="signInNav" data-i18n="signInNav" hidden>Sign in</button>
 </nav>
+<p class="guestbar" id="guestBar" data-i18n="guestBar" hidden>Guest mode: plans are saved only in this browser.</p>
 
 <main>
   <div class="head">
@@ -247,7 +254,7 @@ footer a{color:var(--faint)}
 <dialog id="delDlg">
   <h2 data-i18n="delRoutine">Delete routine.</h2>
   <p class="sub" data-i18n="delSub">Remove just this day, or every day it repeats?</p>
-  <form method="dialog" class="actions" style="flex-direction:column">
+  <form method="dialog" class="actions col">
     <button class="btn primary" value="one" data-i18n="onlyThis">Only this day</button>
     <button class="btn outline" value="all" data-i18n="allDays">All days</button>
     <button class="btn soft" value="" data-i18n="cancel">Cancel</button>
@@ -266,6 +273,16 @@ footer a{color:var(--faint)}
     <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
     <input type="text" name="code" placeholder="Code from email" data-i18n-ph="codePh" inputmode="numeric" autocomplete="one-time-code" maxlength="10" hidden>
     <button class="btn outline" id="loginBtn">Send code</button>
+  </form>
+  <button type="button" class="btn soft guestbtn" id="guestBtn" data-i18n="tryGuest">Try without signing in</button>
+</dialog>
+
+<dialog id="guestDlg">
+  <h2 data-i18n="guestTitle">Guest mode.</h2>
+  <ul class="steps" data-i18n-html="guestBody"></ul>
+  <form method="dialog" class="actions col">
+    <button class="btn primary" value="ok" data-i18n="guestOk">Continue as guest</button>
+    <button class="btn outline" value="" data-i18n="guestBack">Back to sign in</button>
   </form>
 </dialog>
 <div id="toast" hidden></div>
@@ -327,6 +344,9 @@ const T = {
     subFixedEdit: 'Changes apply to every day it repeats.', subFixedNew: 'Repeats at the same time on the chosen weekdays.', subOnce: 'A one-time event on a single day.',
     save: 'Save', none: 'None', errEnd: 'End time must be after start time.', errDays: 'Pick at least one weekday.', errUntil: 'Until must be on or after From.',
     noGroups: 'No groups yet.', delGroup: 'Delete this group? Its events stay, without color.', del: 'Delete', doneAria: 'Done',
+    tryGuest: 'Try without signing in', guestTitle: 'Guest mode.', guestOk: 'Continue as guest', guestBack: 'Back to sign in',
+    guestBody: '<li>Your plans are saved <b>only in this browser</b>.</li><li>They can be lost if you clear browser data, use a private window, or switch to another device or browser.</li><li>Reminders and syncing across devices need an account.</li><li>Sign in later to keep everything you made here.</li>',
+    guestBar: 'Guest mode: plans are saved only in this browser.', signInNav: 'Sign in', remGuest: 'Sign in to get reminders.',
     remOff: 'Reminders are off. Allow notifications for this site.', remFail: 'Couldn’t turn on reminders on this device.', offline: 'Offline. Showing data saved on this device.',
   },
   ko: {
@@ -352,6 +372,9 @@ const T = {
     subFixedEdit: '반복되는 모든 날에 적용돼요.', subFixedNew: '고른 요일마다 같은 시간에 반복돼요.', subOnce: '하루만 있는 일정이에요.',
     save: '저장', none: '없음', errEnd: '종료 시간은 시작 시간보다 늦어야 해요.', errDays: '요일을 하나 이상 골라 주세요.', errUntil: '종료일은 시작일과 같거나 그 뒤여야 해요.',
     noGroups: '아직 그룹이 없어요.', delGroup: '이 그룹을 삭제할까요? 일정은 색 없이 남아요.', del: '삭제', doneAria: '완료',
+    tryGuest: '로그인 없이 둘러보기', guestTitle: '게스트 모드', guestOk: '게스트로 계속하기', guestBack: '로그인하러 가기',
+    guestBody: '<li>일정이 <b>이 브라우저에만</b> 저장돼요.</li><li>브라우저 데이터를 지우거나, 시크릿 창을 쓰거나, 다른 기기·브라우저로 바꾸면 사라질 수 있어요.</li><li>알림과 기기 간 동기화는 로그인해야 쓸 수 있어요.</li><li>나중에 로그인하면 여기서 만든 일정을 그대로 가져갈 수 있어요.</li>',
+    guestBar: '게스트 모드: 일정이 이 브라우저에만 저장돼요.', signInNav: '로그인', remGuest: '알림을 받으려면 로그인해 주세요.',
     remOff: '알림이 꺼져 있어요. 이 사이트의 알림을 허용해 주세요.', remFail: '이 기기에서 알림을 켜지 못했어요.', offline: '오프라인이에요. 이 기기에 저장된 일정을 보여드려요.',
   },
   ja: {
@@ -377,6 +400,9 @@ const T = {
     subFixedEdit: '繰り返すすべての日に反映されます。', subFixedNew: '選んだ曜日の同じ時間に繰り返します。', subOnce: '1日だけの予定です。',
     save: '保存', none: 'なし', errEnd: '終了時刻は開始時刻より後にしてください。', errDays: '曜日を1つ以上選んでください。', errUntil: '終了日は開始日以降にしてください。',
     noGroups: 'グループはまだありません。', delGroup: 'このグループを削除しますか？予定は色なしで残ります。', del: '削除', doneAria: '完了',
+    tryGuest: 'ログインせずに試す', guestTitle: 'ゲストモード', guestOk: 'ゲストで続ける', guestBack: 'ログインに戻る',
+    guestBody: '<li>予定は<b>このブラウザにのみ</b>保存されます。</li><li>ブラウザのデータを消去したり、プライベートウィンドウを使ったり、別の端末・ブラウザに切り替えたりすると消えることがあります。</li><li>リマインダーと端末間の同期にはログインが必要です。</li><li>あとでログインすれば、ここで作った予定をそのまま引き継げます。</li>',
+    guestBar: 'ゲストモード：予定はこのブラウザにのみ保存されます。', signInNav: 'ログイン', remGuest: 'リマインダーを受け取るにはログインしてください。',
     remOff: 'リマインダーがオフです。このサイトの通知を許可してください。', remFail: 'この端末でリマインダーをオンにできませんでした。', offline: 'オフラインです。この端末に保存されたデータを表示しています。',
   },
 };
@@ -726,7 +752,8 @@ if (canPush) navigator.serviceWorker.register('/sw.js').catch(() => {});
 // iPhone Safari only gets PushManager once the site is opened from the Home Screen
 $('#alarmHint').hidden = canPush || !/iPhone|iPad/.test(navigator.userAgent);
 async function enablePush() {
-  if (!canPush || !user) return;
+  if (!user) return toast(t('remGuest'));
+  if (!canPush) return;
   if (await Notification.requestPermission() !== 'granted') return toast(t('remOff'));
   try {
     const reg = await navigator.serviceWorker.ready;
@@ -744,6 +771,19 @@ async function disablePush() {
   } catch {}
 }
 
+// guest mode: no account, plans stay in this browser only (localStorage key 'monthdo')
+let guest = (() => { try { return localStorage.getItem('yoj:guest') === '1'; } catch {} })() || false;
+function setGuest(on) { guest = on; try { on ? localStorage.setItem('yoj:guest', '1') : localStorage.removeItem('yoj:guest'); } catch {} }
+// always confirm the storage warning before entering guest mode
+$('#guestBtn').onclick = () => {
+  if (guest) return $('#loginDlg').close(); // already a guest who opened Sign in: just go back
+  const d = $('#guestDlg');
+  d.returnValue = '';
+  d.onclose = () => { if (d.returnValue !== 'ok') return; setGuest(true); $('#loginDlg').close(); start(null); };
+  d.showModal();
+};
+$('#signInNav').onclick = () => { resetLogin(); $('#loginDlg').showModal(); };
+
 $('#signOut').onclick = async () => {
   try { localStorage.removeItem(localKey()); } catch {} // don't leave this user's planner on a shared device
   if (canPush) await disablePush();
@@ -753,9 +793,11 @@ $('#signOut').onclick = async () => {
 
 async function start(session) {
   user = session?.user || null;
+  if (user) setGuest(false); // signing in ends guest mode; start() then uploads the guest's plans if the account is new
   $('#signOut').hidden = !user;
+  $('#signInNav').hidden = $('#guestBar').hidden = !(sb && !user && guest);
   S = empty();
-  if (sb && !user) { renderMonth(); resetLogin(); return $('#loginDlg').showModal(); }
+  if (sb && !user && !guest) { renderMonth(); resetLogin(); return $('#loginDlg').showModal(); }
   S = {...empty(), ...readLocal(localKey())};
   if (user) {
     const { data, error } = await sb.from('planner').select('data').maybeSingle();
