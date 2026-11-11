@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.0] - 2026-11-11
+### Added
+- Korean and Japanese alongside English (default). Pick a language in the footer or on the sign-in screen; it is kept on the device and with the account.
+- All-day plans: no time or reminder, listed first, kept off the 24-hour dial.
+- How-to-use guide (English, Korean, Japanese), linked from the footer.
+- A welcome dialog the first time an account signs in.
+- Japanese section in the privacy policy.
+
+### Changed
+- Reminder text is written in the account's language (needs the updated send-alarms function).
+
 ## [0.6.1] - 2026-11-08
 ### Changed
 - The Important toggle is now a round star button in the top-right corner of the event/routine form.
