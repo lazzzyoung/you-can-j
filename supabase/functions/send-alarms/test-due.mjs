@@ -27,4 +27,10 @@ assert.deepEqual(at("2026-11-10", "06:50"), []);      // Tuesday, no Gym
 S.done["2026-11-09|gym"] = 1;
 assert.deepEqual(at(m, "06:50"), []);                 // already checked off
 assert.equal(due(S, m, 540)[0].body, "Starting now · 09:00");
+assert.equal(due(S, m, 530)[0]?.body, undefined);            // nothing due at 08:50 (Gym done)
+S.lang = "ko";
+assert.equal(due(S, m, 540)[0].body, "지금 시작 · 09:00");
+assert.equal(due(S, m, 1415)[0].body, "00:05 · 30분 후");
+S.lang = "ja";
+assert.equal(due(S, m, 1415)[0].body, "00:05 · 30分後");
 console.log("send-alarms due(): all checks passed");

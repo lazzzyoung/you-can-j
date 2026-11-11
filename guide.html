@@ -16,6 +16,7 @@ ul,ol{padding-left:20px}
 li{margin:4px 0}
 .lead{font-size:20px;font-weight:300;color:#707070;margin:0 0 24px}
 .tabs{display:flex;gap:6px;margin:0 0 8px}
+.tabs a.on{background:#141414;color:#fff}
 .tabs a{height:36px;padding:0 16px;border-radius:9999px;background:#f3f3f3;color:#141414;font-size:14px;font-weight:600;display:inline-flex;align-items:center;text-decoration:none}
 kbd{font:600 13px Inter,sans-serif;background:#f3f3f3;border-radius:9999px;padding:2px 10px;white-space:nowrap}
 .cta{display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:9999px;background:#141414;color:#fff;font-weight:600;text-decoration:none;margin-top:24px}
@@ -26,11 +27,11 @@ hr{border:0;border-top:1px solid #f0f0f0;margin:56px 0}
 <body>
 <main>
 <p><a href="/">← You can J</a></p>
-<h1>How to use.</h1>
-<p class="lead">A monthly planner that turns anyone into a J.</p>
-<nav class="tabs"><a href="#en">English</a><a href="#ko">한국어</a></nav>
+<nav class="tabs" style="margin-bottom:32px"><a href="#en" data-l="en">English</a><a href="#ko" data-l="ko">한국어</a><a href="#ja" data-l="ja">日本語</a></nav>
 
 <section id="en">
+<h1>How to use.</h1>
+<p class="lead">A monthly planner that turns anyone into a J.</p>
 <h2>1. Sign in</h2>
 <p>Tap <kbd>Continue with Google</kbd>, or enter your email and type the code we send you. You stay signed in until you sign out, and your planner syncs across your devices.</p>
 
@@ -61,22 +62,23 @@ hr{border:0;border-top:1px solid #f0f0f0;margin:56px 0}
   <li><b>iPhone:</b> open the site in Safari, tap Share → <b>Add to Home Screen</b>, and open You can J from that icon. Reminders only work this way.</li>
   <li><b>Android:</b> reminders work in Chrome as is. To use it like an app, tap ⋮ → <b>Install app</b>.</li>
 </ul>
+
+<a class="cta" href="/">Start planning</a>
 </section>
 
-<hr>
 
 <section id="ko" lang="ko">
 <h1>사용 방법.</h1>
 <p class="lead">누구나 J로 만들어 주는 월간 플래너.</p>
 
 <h2>1. 로그인</h2>
-<p><kbd>Continue with Google</kbd>을 누르거나, 이메일을 입력하고 받은 코드를 넣으면 돼요. 로그아웃하기 전까지 로그인이 유지되고, 일정은 모든 기기에서 똑같이 보여요.</p>
+<p><kbd>Google로 계속하기</kbd>를 누르거나, 이메일을 입력하고 받은 코드를 넣으면 돼요. 로그아웃하기 전까지 로그인이 유지되고, 일정은 모든 기기에서 똑같이 보여요.</p>
 
 <h2>2. 일정 추가</h2>
 <ul>
-  <li>달력 아래 <kbd>+ Event</kbd>는 한 번만 있는 일정이에요.</li>
-  <li><kbd>+ Routine</kbd>은 정한 요일마다 반복되는 일정이에요. 예를 들어 월·수·금 운동. <b>From</b>과 <b>Until</b>로 기간을 정할 수 있어요.</li>
-  <li>시작 시간을 고르고 <kbd>+10m</kbd> <kbd>+30m</kbd> <kbd>+1h</kbd>로 끝나는 시간을 정해요. 시간이 없는 일정은 <kbd>All day</kbd>를 누르세요.</li>
+  <li>달력 아래 <kbd>+ 일정</kbd>은 한 번만 있는 일정이에요.</li>
+  <li><kbd>+ 루틴</kbd>은 정한 요일마다 반복되는 일정이에요. 예를 들어 월·수·금 운동. <b>시작일</b>과 <b>종료일</b>로 기간을 정할 수 있어요.</li>
+  <li>시작 시간을 고르고 <kbd>+10m</kbd> <kbd>+30m</kbd> <kbd>+1h</kbd>로 끝나는 시간을 정해요. 시간이 없는 일정은 <kbd>하루 종일</kbd>을 누르세요.</li>
   <li>오른쪽 위 <kbd>☆</kbd>를 누르면 중요한 일정이 되고, 그날이 달력에서 무지개 테두리로 빛나요.</li>
 </ul>
 
@@ -87,21 +89,74 @@ hr{border:0;border-top:1px solid #f0f0f0;margin:56px 0}
   <li>일정을 누르면 수정, <kbd>✕</kbd>를 누르면 삭제예요. 루틴은 그날만 지울지 전체를 지울지 고를 수 있어요.</li>
 </ul>
 
-<h2>4. Someday (언젠가 할 일)</h2>
-<p>해야 하지만 날짜를 아직 안 정한 일은 달력 아래 <b>Someday</b>에 적어 두세요. <kbd>Schedule</kbd>을 누르면 일정이 되고, 날짜를 열면 <kbd>+ Today</kbd>로 그날에 바로 넣을 수 있어요.</p>
+<h2>4. 언젠가 할 일</h2>
+<p>해야 하지만 날짜를 아직 안 정한 일은 달력 아래 <b>언젠가 할 일</b>에 적어 두세요. <kbd>일정 잡기</kbd>를 누르면 일정이 되고, 날짜를 열면 <kbd>+ 오늘</kbd>로 그날에 바로 넣을 수 있어요.</p>
 
 <h2>5. 그룹</h2>
-<p>위쪽 <kbd>Groups</kbd>에서 회사는 회색, 친구는 노란색처럼 색깔 그룹을 만들고, 일정을 추가할 때 골라요.</p>
+<p>위쪽 <kbd>그룹</kbd>에서 회사는 회색, 친구는 노란색처럼 색깔 그룹을 만들고, 일정을 추가할 때 골라요.</p>
 
 <h2>6. 알림</h2>
 <ul>
-  <li>일정을 추가할 때 <b>Remind me</b>를 고르고 알림을 허용하세요.</li>
+  <li>일정을 추가할 때 <b>알림</b>을 고르고 알림을 허용하세요.</li>
   <li><b>아이폰:</b> Safari로 열고 공유 → <b>홈 화면에 추가</b>를 누른 뒤, 홈 화면의 You can J 아이콘으로 열어야 알림이 와요.</li>
   <li><b>안드로이드:</b> 크롬에서 그대로 알림이 와요. 앱처럼 쓰려면 ⋮ → <b>앱 설치</b>를 누르세요.</li>
 </ul>
 
-<a class="cta" href="/">Start planning</a>
+<a class="cta" href="/">시작하기</a>
+</section>
+
+<section id="ja" lang="ja">
+<h1>使い方</h1>
+<p class="lead">だれでもJ（計画派）になれる月間プランナー。</p>
+
+<h2>1. ログイン</h2>
+<p><kbd>Googleで続ける</kbd>を押すか、メールアドレスを入力して届いたコードを入れてください。ログアウトするまでログインは続き、予定はすべての端末で同期されます。</p>
+
+<h2>2. 予定を追加</h2>
+<ul>
+  <li>カレンダーの下の<kbd>+ 予定</kbd>は一度きりの予定です。</li>
+  <li><kbd>+ ルーティン</kbd>は選んだ曜日に繰り返す予定です。例：月・水・金の筋トレ。<b>開始日</b>と<b>終了日</b>で期間を決められます。</li>
+  <li>開始時刻を選び、<kbd>+10m</kbd> <kbd>+30m</kbd> <kbd>+1h</kbd>で終了時刻を決めます。時間のない予定は<kbd>終日</kbd>を押してください。</li>
+  <li>右上の<kbd>☆</kbd>を押すと重要な予定になり、その日がカレンダーで虹色の枠で光ります。</li>
+</ul>
+
+<h2>3. 1日を見る</h2>
+<ul>
+  <li>日付をタップすると、24時間の円形時計と予定リストが開きます。</li>
+  <li>終わったことはチェックボックスで記録します。</li>
+  <li>予定をタップすると編集、<kbd>✕</kbd>で削除です。ルーティンはその日だけか、すべての日かを選べます。</li>
+</ul>
+
+<h2>4. いつかやること</h2>
+<p>やるべきだけど日付が決まっていないことは、カレンダーの下の<b>いつかやること</b>にメモしましょう。<kbd>予定にする</kbd>で予定になり、日付を開くと<kbd>+ 今日</kbd>でその日に入れられます。</p>
+
+<h2>5. グループ</h2>
+<p>上の<kbd>グループ</kbd>で、仕事はグレー、友だちは黄色のように色分けのグループを作り、予定を追加するときに選びます。</p>
+
+<h2>6. リマインダー</h2>
+<ul>
+  <li>予定を追加するときに<b>リマインダー</b>を選び、通知を許可してください。</li>
+  <li><b>iPhone：</b>Safariで開き、共有 → <b>ホーム画面に追加</b>を押してから、ホーム画面のYou can Jアイコンで開くと通知が届きます。</li>
+  <li><b>Android：</b>Chromeのままで通知が届きます。アプリのように使うには ⋮ → <b>アプリをインストール</b>を押してください。</li>
+</ul>
+
+<a class="cta" href="/">はじめる</a>
 </section>
 </main>
+<script>
+// show one language: the tab clicked, else the one picked in the app, else English
+const show = l => {
+  document.querySelectorAll('section[id]').forEach(s => s.hidden = s.id !== l);
+  document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.dataset.l === l));
+  document.documentElement.lang = l;
+};
+let saved; try { saved = localStorage.getItem('yoj:lang'); } catch {}
+show(['en','ko','ja'].includes(location.hash.slice(1)) ? location.hash.slice(1) : ['ko','ja'].includes(saved) ? saved : 'en');
+document.querySelector('.tabs').onclick = e => {
+  const l = e.target.dataset.l; if (!l) return;
+  e.preventDefault(); show(l); history.replaceState(null, '', '#' + l);
+  try { localStorage.setItem('yoj:lang', l); } catch {}
+};
+</script>
 </body>
 </html>
