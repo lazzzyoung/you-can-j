@@ -440,13 +440,6 @@ let S = empty(), user = null, syncTimer;
 const readLocal = k => { try { return JSON.parse(localStorage.getItem(k)); } catch {} };
 const localKey = () => 'monthdo' + (user ? ':' + user.id : '');
 const toast = msg => { const t = $('#toast'); t.textContent = msg; t.hidden = false; setTimeout(() => t.hidden = true, 3000); };
-// usage log for the admin dashboard: event name + small details, never plan titles or emails.
-// Only on the live https site, so local previews don't pollute the numbers.
-const device = (() => { try { let d = localStorage.getItem('yoj:device'); if (!d) localStorage.setItem('yoj:device', d = uid()); return d; } catch { return 'nostore'; } })();
-const track = (name, props = {}) => {
-  if (!sb || location.protocol !== 'https:') return;
-  sb.from('events').insert({ device, name, props }).then(() => {}, () => {});
-};
 const save = () => {
   try { localStorage.setItem(localKey(), JSON.stringify(S)); } catch {}
   if (!user) return;
@@ -511,8 +504,8 @@ let fromTodo = null;
 const onTodo = e => {
   const r = e.target.closest('[data-tid]'); if (!r) return;
   const td = S.todos.find(x => x.id === r.dataset.tid);
-  if (e.target.matches('[data-sched]')) { track('todo_schedule', { from: e.currentTarget.id === 'dayTodos' ? 'day' : 'list' }); openAdd('once'); fromTodo = td.id; $('#form').title.value = td.title; return; }
-  if (e.target.matches('input')) { td.done = e.target.checked; track('todo_done'); }
+  if (e.target.matches('[data-sched]')) { openAdd('once'); fromTodo = td.id; $('#form').title.value = td.title; return; }
+  if (e.target.matches('input')) td.done = e.target.checked;
   else if (e.target.matches('.x')) S.todos = S.todos.filter(x => x !== td);
   else return;
   save(); refresh();
@@ -571,13 +564,12 @@ function renderDay() {
 const refresh = () => { renderMonth(); if ($('#dayDlg').open) renderDay(); };
 
 // events
-$('#prev').onclick = () => { cur.setMonth(cur.getMonth() - 1); renderMonth(); track('month_prev'); };
-$('#next').onclick = () => { cur.setMonth(cur.getMonth() + 1); renderMonth(); track('month_next'); };
+$('#prev').onclick = () => { cur.setMonth(cur.getMonth() - 1); renderMonth(); };
+$('#next').onclick = () => { cur.setMonth(cur.getMonth() + 1); renderMonth(); };
 
 $('#grid').onclick = e => {
   const b = e.target.closest('[data-d]'); if (!b) return;
   selDate = b.dataset.d; selId = null; renderDay(); $('#dayDlg').showModal();
-  track('open_day', { items: itemsOf(selDate).length });
 };
 $('#dayClose').onclick = () => $('#dayDlg').close();
 $('#dayDlg').onclick = e => { if (e.target.id === 'dayDlg') e.target.close(); };
@@ -589,11 +581,11 @@ $('#dial').onclick = e => {
 $('#list').onclick = e => {
   const row = e.target.closest('.row'); if (!row) return;
   const id = row.dataset.id;
-  if (e.target.matches('input')) { track(e.target.checked ? 'check_done' : 'uncheck_done'); e.target.checked ? S.done[selDate + '|' + id] = 1 : delete S.done[selDate + '|' + id]; save(); return refresh(); }
+  if (e.target.matches('input')) { e.target.checked ? S.done[selDate + '|' + id] = 1 : delete S.done[selDate + '|' + id]; save(); return refresh(); }
   if (e.target.matches('.x')) {
     const f = S.fixed.find(f => f.id === id);
     if (f) return askDeleteRoutine(f);
-    S.once = S.once.filter(o => o.id !== id); track('delete_event');
+    S.once = S.once.filter(o => o.id !== id);
     if (selId === id) selId = null; save(); return refresh();
   }
   // tapping a row opens it for editing
@@ -606,7 +598,6 @@ function askDeleteRoutine(f) {
   const d = $('#delDlg');
   d.returnValue = '';
   d.onclose = () => {
-    if (d.returnValue) track('delete_routine', { scope: d.returnValue });
     if (d.returnValue === 'one') (f.skip ||= []).push(selDate);
     else if (d.returnValue === 'all') S.fixed = S.fixed.filter(x => x !== f);
     else return;
@@ -649,7 +640,7 @@ $('#tdList').onclick = $('#dayTodos').onclick = onTodo;
 $('#tdForm').onsubmit = e => {
   e.preventDefault();
   const title = e.target.title.value.trim(); if (!title) return;
-  S.todos.push({ id: uid(), title }); track('todo_add');
+  S.todos.push({ id: uid(), title });
   save(); e.target.reset(); renderTodos();
 };
 $('#addFixed').onclick = () => openAdd('fixed');
@@ -688,7 +679,6 @@ $('#form').onsubmit = e => {
     upsert(S.once, { ...base, date: f.date.value });
     if (fromTodo) S.todos = S.todos.filter(t => t.id !== fromTodo); // scheduled, so it leaves Someday
   }
-  track((editId ? 'edit_' : 'add_') + (addType === 'fixed' ? 'routine' : 'event'), { allDay: base.dur >= 1439, alarm: base.alarm, star: base.star, group: !!base.group, fromTodo: !!fromTodo });
   save(); $('#addDlg').close(); refresh();
 };
 
@@ -705,7 +695,7 @@ $('#grpClose').onclick = () => $('#grpDlg').close();
 $('#gForm').onsubmit = e => {
   e.preventDefault();
   const f = e.target;
-  S.groups.push({ id: uid(), name: f.name.value.trim(), color: f.color.value }); track('group_add');
+  S.groups.push({ id: uid(), name: f.name.value.trim(), color: f.color.value });
   save(); f.reset(); renderGroups(); renderMonth();
 };
 $('#gList').oninput = e => {
@@ -732,7 +722,6 @@ function resetLogin() {
 $('#loginDlg').oncancel = e => e.preventDefault();
 // Google: redirects away, Supabase returns here and getSession() picks the session up from the URL
 $('#googleBtn').onclick = async () => {
-  track('login_google');
   const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
   if (error) alert(error.message);
 };
@@ -744,7 +733,7 @@ $('#loginForm').onsubmit = async e => {
     const { error } = await sb.auth.signInWithOtp({ email });
     if (error) alert(error.message);
     else {
-      f.code.hidden = false; f.code.required = true; f.email.readOnly = true; track('login_code_sent');
+      f.code.hidden = false; f.code.required = true; f.email.readOnly = true;
       btn.textContent = t('signInBtn');
       $('#loginSub').textContent = t('codeSent', email);
       f.code.focus();
@@ -765,14 +754,13 @@ $('#alarmHint').hidden = canPush || !/iPhone|iPad/.test(navigator.userAgent);
 async function enablePush() {
   if (!user) return toast(t('remGuest'));
   if (!canPush) return;
-  if (await Notification.requestPermission() !== 'granted') { track('reminders_blocked'); return toast(t('remOff')); }
+  if (await Notification.requestPermission() !== 'granted') return toast(t('remOff'));
   try {
     const reg = await navigator.serviceWorker.ready;
     const key = Uint8Array.from(atob(VAPID.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
     const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
     const { error } = await sb.from('push_subs').upsert({ endpoint: sub.endpoint, sub: sub.toJSON(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone });
     if (error) throw error;
-    track('reminders_on');
   } catch { toast(t('remFail')); }
 }
 // stop this device's reminders so the next person signing in here doesn't get them
@@ -791,7 +779,7 @@ $('#guestBtn').onclick = () => {
   if (guest) return $('#loginDlg').close(); // already a guest who opened Sign in: just go back
   const d = $('#guestDlg');
   d.returnValue = '';
-  d.onclose = () => { track(d.returnValue === 'ok' ? 'guest_start' : 'guest_cancel'); if (d.returnValue !== 'ok') return; setGuest(true); $('#loginDlg').close(); start(null); };
+  d.onclose = () => { if (d.returnValue !== 'ok') return; setGuest(true); $('#loginDlg').close(); start(null); };
   d.showModal();
 };
 $('#signInNav').onclick = () => { resetLogin(); $('#loginDlg').showModal(); };
@@ -799,7 +787,6 @@ $('#signInNav').onclick = () => { resetLogin(); $('#loginDlg').showModal(); };
 $('#signOut').onclick = async () => {
   try { localStorage.removeItem(localKey()); } catch {} // don't leave this user's planner on a shared device
   if (canPush) await disablePush();
-  track('sign_out');
   await sb.auth.signOut();
   start(null);
 };
@@ -810,7 +797,7 @@ async function start(session) {
   $('#signOut').hidden = !user;
   $('#signInNav').hidden = $('#guestBar').hidden = !(sb && !user && guest);
   S = empty();
-  if (sb && !user && !guest) { renderMonth(); resetLogin(); track('login_screen'); return $('#loginDlg').showModal(); }
+  if (sb && !user && !guest) { renderMonth(); resetLogin(); return $('#loginDlg').showModal(); }
   S = {...empty(), ...readLocal(localKey())};
   if (user) {
     const { data, error } = await sb.from('planner').select('data').maybeSingle();
@@ -822,7 +809,6 @@ async function start(session) {
   // a language picked on this device wins; a fresh device takes the account's language
   if (user) { if (!storedLang() && T[S.lang]) setLang(S.lang); else if (S.lang !== L) { S.lang = L; save(); } }
   renderMonth();
-  track('session', { as: user ? 'user' : 'guest', plans: S.fixed.length + S.once.length, todos: S.todos.length });
   // show the welcome once per account (saved with the planner, so not again on other devices)
   if (!S.welcomed) $('#welcomeDlg').showModal();
 }
@@ -831,7 +817,6 @@ $('#welcomeDlg').onclose = welcomed;
 $('#welcomeDlg a').onclick = welcomed;
 // S.lang is also read by send-alarms to write reminders in this language
 function setLang(l) {
-  if (l !== L) track('lang_change', { to: l });
   L = l;
   try { localStorage.setItem('yoj:lang', l); } catch {}
   if (user && S.lang !== l) { S.lang = l; save(); }
@@ -840,9 +825,6 @@ function setLang(l) {
 }
 document.addEventListener('change', e => { if (e.target.matches('.lang')) setLang(e.target.value); });
 applyLang();
-// one 'visit' per page load: language, installed app or browser, where they came from
-track('visit', { lang: L, app: matchMedia('(display-mode: standalone)').matches, ref: document.referrer ? new URL(document.referrer).host : '', mobile: matchMedia('(pointer: coarse)').matches });
-document.querySelector('footer').addEventListener('click', e => { const a = e.target.closest('a'); if (a) track('open_' + a.getAttribute('href').replace(/\W|html/g, '')); });
 if (sb) sb.auth.getSession().then(({ data }) => start(data.session));
 else start(null);
 </script>
