@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.1] - 2026-11-11
+### Changed
+- All day is a button after +1h that sets 00:00–23:59; all-day plans fill the 24-hour dial and can have a reminder.
+
 ## [0.7.0] - 2026-11-11
 ### Added
 - Korean and Japanese alongside English (default). Pick a language in the footer or on the sign-in screen; it is kept on the device and with the account.
