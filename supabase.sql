@@ -45,3 +45,53 @@ select cron.schedule('send-alarms', '* * * * *', $$
     body := '{}'::jsonb
   )
 $$);
+
+-- ── Usage log + admin dashboard (v0.9). Run this part once. ──────────────
+-- What people do in the app: event names and small details, never plan titles.
+-- device = random id kept in that browser; user_id = the signed-in account (null for guests/visitors).
+create table public.events (
+  id bigint generated always as identity primary key,
+  at timestamptz not null default now(),
+  device text not null check (char_length(device) <= 40),
+  user_id uuid default auth.uid(),
+  name text not null check (char_length(name) <= 40),
+  props jsonb not null default '{}' check (pg_column_size(props) < 2000)
+);
+create index on public.events (at desc);
+alter table public.events enable row level security;
+-- anyone using the app can add events (only for themselves); nobody but admins can read them
+-- ponytail: anyone with the public key could insert junk events; add rate limiting if that happens
+create policy "log own events" on public.events
+  for insert to anon, authenticated
+  with check (user_id is null or user_id = (select auth.uid()));
+
+-- Who may open /admin.html. Add yourself once (see the last line).
+create table public.admins (user_id uuid primary key references auth.users on delete cascade);
+alter table public.admins enable row level security;
+create policy "see own admin row" on public.admins
+  for select to authenticated using (user_id = (select auth.uid()));
+create policy "admins read events" on public.events
+  for select to authenticated
+  using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
+
+-- Account numbers for the dashboard (auth.users is not readable from the browser, so this runs as owner after an admin check).
+create or replace function public.admin_stats() returns json
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from public.admins where user_id = auth.uid()) then
+    raise exception 'not allowed';
+  end if;
+  return json_build_object(
+    'users', (select count(*) from auth.users),
+    'active7', (select count(*) from auth.users where last_sign_in_at > now() - interval '7 days'),
+    'devices', (select count(*) from public.push_subs),
+    'signups', (select coalesce(json_object_agg(d, n), '{}') from (
+      select to_char(created_at at time zone 'Asia/Seoul', 'YYYY-MM-DD') d, count(*) n
+      from auth.users where created_at > now() - interval '30 days' group by 1) x)
+  );
+end $$;
+revoke all on function public.admin_stats() from public, anon;
+grant execute on function public.admin_stats() to authenticated;
+
+-- Make yourself an admin: put the email you sign in with between the quotes and run this line.
+-- insert into public.admins select id from auth.users where email = 'YOUR_SIGN_IN_EMAIL';
