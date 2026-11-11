@@ -21,16 +21,21 @@ const itemsOn = (S, ds) => {
     ...(S.once || []).filter((o) => o.date === ds),
   ];
 };
-const before = (m) => (m >= 60 ? `${m / 60}h` : `${m} min`);
+// reminder text in the language picked in the app (S.lang), English by default
+const MSG = {
+  en: { now: (t) => `Starting now · ${t}`, soon: (t, m) => `${t} · in ${m >= 60 ? `${m / 60}h` : `${m} min`}` },
+  ko: { now: (t) => `지금 시작 · ${t}`, soon: (t, m) => `${t} · ${m >= 60 ? `${m / 60}시간` : `${m}분`} 후` },
+  ja: { now: (t) => `開始時刻です · ${t}`, soon: (t, m) => `${t} · ${m >= 60 ? `${m / 60}時間` : `${m}分`}後` },
+};
 // reminders due at local minute `now` of local date `date`
 const due = (S, date, now) => {
-  const out = [];
+  const out = [], msg = MSG[S.lang] || MSG.en;
   for (const [ds, off] of [[date, 0], [nextDay(date), 1440]]) {
     for (const i of itemsOn(S, ds)) {
       if (i.alarm == null || S.done?.[ds + "|" + i.id]) continue;
       const at = off + mins(i.start) - i.alarm;
       if (at > now - WINDOW && at <= now) {
-        out.push({ key: `${ds}|${i.id}|${i.start}|${i.alarm}`, title: i.title, body: i.alarm ? `${i.start} · in ${before(i.alarm)}` : `Starting now · ${i.start}` });
+        out.push({ key: `${ds}|${i.id}|${i.start}|${i.alarm}`, title: i.title, body: i.alarm ? msg.soon(i.start, i.alarm) : msg.now(i.start) });
       }
     }
   }

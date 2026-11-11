@@ -107,6 +107,9 @@ input[type=text],input[type=email],input[type=time],input[type=number],input[typ
 input[type=time],input[type=date]{-webkit-appearance:none;appearance:none;text-align:left}
 input::-webkit-date-and-time-value{text-align:left}
 select{font:inherit;font-size:16px;font-weight:450;background:var(--field);border:0;border-radius:16px;padding:0 16px;height:48px;color:var(--ink);width:100%;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 22px) 21px,calc(100% - 16px) 21px;background-size:6px 6px;background-repeat:no-repeat}
+select.lang{width:auto;height:32px;padding:0 30px 0 12px;border-radius:9999px;font-size:12px;font-weight:600;background-color:var(--soft);background-position:calc(100% - 18px) 13px,calc(100% - 13px) 13px;background-size:5px 5px}
+footer select.lang{vertical-align:middle;color:var(--muted);margin-left:2px}
+#loginDlg .dhead select.lang{margin-top:6px}
 .hint{font-size:12px;font-weight:450;color:var(--muted)}
 input:focus,select:focus{outline:2px solid var(--ink)}
 input::placeholder{color:var(--faint)}
@@ -163,31 +166,31 @@ footer a{color:var(--faint)}
 <body>
 <nav>
   <b>You can J</b>
-  <button class="btn soft" id="openGroups">Groups</button>
-  <button class="btn outline" id="signOut" hidden>Sign out</button>
+  <button class="btn soft" id="openGroups" data-i18n="groups">Groups</button>
+  <button class="btn outline" id="signOut" data-i18n="signOut" hidden>Sign out</button>
 </nav>
 
 <main>
   <div class="head">
     <h1 id="title"></h1>
-    <button class="btn outline icon" id="prev" aria-label="Previous month">‹</button>
-    <button class="btn outline icon" id="next" aria-label="Next month">›</button>
+    <button class="btn outline icon" id="prev" aria-label="Previous month" data-i18n-aria="prevMonth">‹</button>
+    <button class="btn outline icon" id="next" aria-label="Next month" data-i18n-aria="nextMonth">›</button>
   </div>
   <div class="grid" id="grid"></div>
   <div class="bar">
-    <button class="btn outline" id="addFixed">+ Routine</button>
-    <button class="btn primary" id="addOnce">+ Event</button>
+    <button class="btn outline" id="addFixed" data-i18n="routineBtn">+ Routine</button>
+    <button class="btn primary" id="addOnce" data-i18n="eventBtn">+ Event</button>
   </div>
   <section class="someday">
-    <div class="shead"><h2>Someday.</h2><span class="sub" id="tdCount"></span></div>
+    <div class="shead"><h2 data-i18n="someday">Someday.</h2><span class="sub" id="tdCount"></span></div>
     <form id="tdForm" class="grow">
-      <input type="text" name="title" placeholder="Add a to-do with no date yet" required maxlength="60" aria-label="New to-do">
-      <button class="btn primary">Add</button>
+      <input type="text" name="title" placeholder="Add a to-do with no date yet" required maxlength="60" aria-label="New to-do" data-i18n-ph="tdPh" data-i18n-aria="tdAria">
+      <button class="btn primary" data-i18n="add">Add</button>
     </form>
     <div class="list" id="tdList"></div>
   </section>
 </main>
-<footer><a href="/guide.html">How to use</a> · <a href="/privacy.html">Privacy</a></footer>
+<footer><a href="/guide.html" data-i18n="howTo">How to use</a> · <a href="/privacy.html" data-i18n="privacy">Privacy</a> · <select class="lang" aria-label="Language"></select></footer>
 
 <dialog id="dayDlg">
   <h2 id="dayTitle"></h2><p class="sub" id="daySub"></p>
@@ -195,8 +198,8 @@ footer a{color:var(--faint)}
   <div class="list" id="list"></div>
   <div id="dayTodos"></div>
   <div class="actions">
-    <button class="btn outline" id="dayClose">Close</button>
-    <button class="btn primary" id="dayAdd">+ Add event</button>
+    <button class="btn outline" id="dayClose" data-i18n="close">Close</button>
+    <button class="btn primary" id="dayAdd" data-i18n="addEventDay">+ Add event</button>
   </div>
 </dialog>
 
@@ -204,105 +207,198 @@ footer a{color:var(--faint)}
   <div class="dhead">
     <h2 id="addTitle"></h2>
     <!-- form="form" keeps it part of the form (f.star, reset) while sitting in the header -->
-    <label class="starbtn"><input type="checkbox" name="star" form="form" aria-label="Important"><span aria-hidden="true"></span></label>
+    <label class="starbtn"><input type="checkbox" name="star" form="form" aria-label="Important" data-i18n-aria="important"><span aria-hidden="true"></span></label>
   </div>
   <p class="sub" id="addSub"></p>
   <form id="form">
-    <label class="f">Name<input type="text" name="title" placeholder="e.g. Workout" required maxlength="40"></label>
-    <label class="pilltog"><input type="checkbox" name="allDay"><span>All day</span></label>
+    <label class="f"><span data-i18n="name">Name</span><input type="text" name="title" placeholder="e.g. Workout" data-i18n-ph="namePh" required maxlength="40"></label>
+    <label class="pilltog"><input type="checkbox" name="allDay"><span data-i18n="allDay">All day</span></label>
     <div class="stack" id="timeF">
       <div class="two">
-        <label class="f">Start<input type="time" name="start" value="07:00" required></label>
-        <label class="f">End<input type="time" name="end" value="07:00" required></label>
+        <label class="f"><span data-i18n="start">Start</span><input type="time" name="start" value="07:00" required></label>
+        <label class="f"><span data-i18n="end">End</span><input type="time" name="end" value="07:00" required></label>
       </div>
       <div class="quick"><button type="button" data-add="10">+10m</button><button type="button" data-add="30">+30m</button><button type="button" data-add="60">+1h</button></div>
     </div>
-    <div class="f"><span style="font-size:14px;font-weight:600">Group</span>
+    <div class="f"><span style="font-size:14px;font-weight:600" data-i18n="group">Group</span>
       <div class="groups" id="groupPick"></div>
     </div>
-    <div id="fixedF" class="f"><span style="font-size:14px;font-weight:600">Repeat on</span>
+    <div id="fixedF" class="f"><span style="font-size:14px;font-weight:600" data-i18n="repeatOn">Repeat on</span>
       <div class="days" style="margin-top:4px"></div>
       <div class="two" style="margin-top:12px">
-        <label class="f">From<input type="date" name="from"></label>
-        <label class="f">Until<input type="date" name="until"></label>
+        <label class="f"><span data-i18n="from">From</span><input type="date" name="from"></label>
+        <label class="f"><span data-i18n="until">Until</span><input type="date" name="until"></label>
       </div>
     </div>
-    <label class="f" id="onceF">Date<input type="date" name="date"></label>
-    <label class="f" id="alarmF">Remind me
+    <label class="f" id="onceF"><span data-i18n="date">Date</span><input type="date" name="date"></label>
+    <label class="f" id="alarmF"><span data-i18n="remind">Remind me</span>
       <select name="alarm">
-        <option value="">No reminder</option>
-        <option value="0">At start time</option>
-        <option value="5">5 min before</option>
-        <option value="10">10 min before</option>
-        <option value="30">30 min before</option>
-        <option value="60">1 hour before</option>
+        <option value="" data-i18n="r_none">No reminder</option>
+        <option value="0" data-i18n="r_0">At start time</option>
+        <option value="5" data-i18n="r_5">5 min before</option>
+        <option value="10" data-i18n="r_10">10 min before</option>
+        <option value="30" data-i18n="r_30">30 min before</option>
+        <option value="60" data-i18n="r_60">1 hour before</option>
       </select>
-      <small class="hint" id="alarmHint" hidden>On iPhone, reminders work after you add this site to your Home Screen (Share → Add to Home Screen) and open it from there.</small>
+      <small class="hint" id="alarmHint" data-i18n="iosHint" hidden>On iPhone, reminders work after you add this site to your Home Screen (Share → Add to Home Screen) and open it from there.</small>
     </label>
     <div class="actions">
-      <button type="button" class="btn outline" id="addCancel">Cancel</button>
+      <button type="button" class="btn outline" id="addCancel" data-i18n="cancel">Cancel</button>
       <button class="btn primary" id="addSubmit">Add</button>
     </div>
   </form>
 </dialog>
 
 <dialog id="delDlg">
-  <h2>Delete routine.</h2>
-  <p class="sub">Remove just this day, or every day it repeats?</p>
+  <h2 data-i18n="delRoutine">Delete routine.</h2>
+  <p class="sub" data-i18n="delSub">Remove just this day, or every day it repeats?</p>
   <form method="dialog" class="actions" style="flex-direction:column">
-    <button class="btn primary" value="one">Only this day</button>
-    <button class="btn outline" value="all">All days</button>
-    <button class="btn soft" value="">Cancel</button>
+    <button class="btn primary" value="one" data-i18n="onlyThis">Only this day</button>
+    <button class="btn outline" value="all" data-i18n="allDays">All days</button>
+    <button class="btn soft" value="" data-i18n="cancel">Cancel</button>
   </form>
 </dialog>
 
 <dialog id="loginDlg">
-  <h2>Sign in.</h2>
+  <div class="dhead"><h2 data-i18n="signIn">Sign in.</h2><select class="lang" aria-label="Language"></select></div>
   <p class="sub" id="loginSub">Sign in to sync your planner.</p>
   <button type="button" class="btn primary google" id="googleBtn">
     <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
-    Continue with Google
+    <span data-i18n="google">Continue with Google</span>
   </button>
-  <p class="or">or sign in with email</p>
+  <p class="or" data-i18n="orEmail">or sign in with email</p>
   <form id="loginForm">
     <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
-    <input type="text" name="code" placeholder="Code from email" inputmode="numeric" autocomplete="one-time-code" maxlength="10" hidden>
+    <input type="text" name="code" placeholder="Code from email" data-i18n-ph="codePh" inputmode="numeric" autocomplete="one-time-code" maxlength="10" hidden>
     <button class="btn outline" id="loginBtn">Send code</button>
   </form>
 </dialog>
 <div id="toast" hidden></div>
 
 <dialog id="welcomeDlg">
-  <h2>Welcome.</h2>
-  <p class="sub">A monthly planner that turns anyone into a J.</p>
+  <h2 data-i18n="welcome">Welcome.</h2>
+  <p class="sub" data-i18n="tagline">A monthly planner that turns anyone into a J.</p>
   <ol class="steps">
-    <li><b>+ Event</b> for one-off plans, <b>+ Routine</b> for weekly habits.</li>
-    <li>Tap a date to see its 24-hour clock and check things off.</li>
-    <li>Put to-dos without a date in <b>Someday</b>, under the calendar.</li>
-    <li>Pick <b>Remind me</b> to get a notification before a plan.</li>
+    <li data-i18n-html="step1"><b>+ Event</b> for one-off plans, <b>+ Routine</b> for weekly habits.</li>
+    <li data-i18n-html="step2">Tap a date to see its 24-hour clock and check things off.</li>
+    <li data-i18n-html="step3">Put to-dos without a date in <b>Someday</b>, under the calendar.</li>
+    <li data-i18n-html="step4">Pick <b>Remind me</b> to get a notification before a plan.</li>
   </ol>
   <form method="dialog" class="actions" style="flex-direction:row">
-    <a class="btn outline" href="/guide.html">How to use</a>
-    <button class="btn primary">Start planning</button>
+    <a class="btn outline" href="/guide.html" data-i18n="howTo">How to use</a>
+    <button class="btn primary" data-i18n="startPlanning">Start planning</button>
   </form>
 </dialog>
 
 <dialog id="grpDlg">
-  <h2>Groups.</h2>
-  <p class="sub">Color-code events, e.g. Work in gray, Friends in yellow.</p>
+  <h2 data-i18n="groupsTitle">Groups.</h2>
+  <p class="sub" data-i18n="groupsSub">Color-code events, e.g. Work in gray, Friends in yellow.</p>
   <form id="gForm" class="grow">
     <input type="color" name="color" value="#adadad" aria-label="Color">
-    <input type="text" name="name" placeholder="New group" required maxlength="20">
-    <button class="btn primary">Add</button>
+    <input type="text" name="name" placeholder="New group" data-i18n-ph="groupPh" required maxlength="20">
+    <button class="btn primary" data-i18n="add">Add</button>
   </form>
   <div class="list" id="gList"></div>
-  <div class="actions"><button class="btn outline" id="grpClose">Done</button></div>
+  <div class="actions"><button class="btn outline" id="grpClose" data-i18n="done">Done</button></div>
 </dialog>
 
 <script>
 const $ = s => document.querySelector(s);
-const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ── languages: English is the default; markup uses data-i18n / -html / -ph / -aria keys ──
+const LANGS = { en: 'English', ko: '한국어', ja: '日本語' };
+const LOCALE = { en: 'en-US', ko: 'ko-KR', ja: 'ja-JP' };
+const T = {
+  en: {
+    prevMonth: 'Previous month', nextMonth: 'Next month', routineBtn: '+ Routine', eventBtn: '+ Event',
+    someday: 'Someday.', tdPh: 'Add a to-do with no date yet', tdAria: 'New to-do', add: 'Add', howTo: 'How to use', privacy: 'Privacy',
+    close: 'Close', addEventDay: '+ Add event', important: 'Important', name: 'Name', namePh: 'e.g. Workout', allDay: 'All day',
+    start: 'Start', end: 'End', group: 'Group', repeatOn: 'Repeat on', from: 'From', until: 'Until', date: 'Date', remind: 'Remind me',
+    r_none: 'No reminder', r_0: 'At start time', r_5: '5 min before', r_10: '10 min before', r_30: '30 min before', r_60: '1 hour before',
+    iosHint: 'On iPhone, reminders work after you add this site to your Home Screen (Share → Add to Home Screen) and open it from there.',
+    cancel: 'Cancel', delRoutine: 'Delete routine.', delSub: 'Remove just this day, or every day it repeats?', onlyThis: 'Only this day', allDays: 'All days',
+    signIn: 'Sign in.', loginSub: 'Sign in to sync your planner.', google: 'Continue with Google', orEmail: 'or sign in with email',
+    codePh: 'Code from email', sendCode: 'Send code', signInBtn: 'Sign in', codeSent: e => `Enter the code sent to ${e}.`,
+    welcome: 'Welcome.', tagline: 'A monthly planner that turns anyone into a J.',
+    step1: '<b>+ Event</b> for one-off plans, <b>+ Routine</b> for weekly habits.',
+    step2: 'Tap a date to see its 24-hour clock and check things off.',
+    step3: 'Put to-dos without a date in <b>Someday</b>, under the calendar.',
+    step4: 'Pick <b>Remind me</b> to get a notification before a plan.',
+    startPlanning: 'Start planning', groups: 'Groups', groupsTitle: 'Groups.', groupsSub: 'Color-code events, e.g. Work in gray, Friends in yellow.',
+    groupPh: 'New group', done: 'Done', signOut: 'Sign out',
+    syncFail: 'Couldn’t sync. Saved on this device.', todoCount: n => `${n} to do`, schedule: 'Schedule', today: '+ Today',
+    tdEmpty: 'Things you need to do, but not on a set day.', routine: 'Routine', empty: 'Empty', doneLbl: 'done', addAnEvent: 'Add an event',
+    nothing: 'Nothing planned.', fitToday: 'Fit one in today?', newRoutine: 'New routine.', editRoutine: 'Edit routine.', newEvent: 'New event.', editEvent: 'Edit event.',
+    subFixedEdit: 'Changes apply to every day it repeats.', subFixedNew: 'Repeats at the same time on the chosen weekdays.', subOnce: 'A one-time event on a single day.',
+    save: 'Save', none: 'None', errEnd: 'End time must be after start time.', errDays: 'Pick at least one weekday.', errUntil: 'Until must be on or after From.',
+    noGroups: 'No groups yet.', delGroup: 'Delete this group? Its events stay, without color.', del: 'Delete', doneAria: 'Done',
+    remOff: 'Reminders are off. Allow notifications for this site.', remFail: 'Couldn’t turn on reminders on this device.', offline: 'Offline. Showing data saved on this device.',
+  },
+  ko: {
+    prevMonth: '이전 달', nextMonth: '다음 달', routineBtn: '+ 루틴', eventBtn: '+ 일정',
+    someday: '언젠가 할 일', tdPh: '날짜 없는 할 일 추가', tdAria: '새 할 일', add: '추가', howTo: '사용법', privacy: '개인정보처리방침',
+    close: '닫기', addEventDay: '+ 일정 추가', important: '중요', name: '이름', namePh: '예: 운동', allDay: '하루 종일',
+    start: '시작', end: '종료', group: '그룹', repeatOn: '반복 요일', from: '시작일', until: '종료일', date: '날짜', remind: '알림',
+    r_none: '알림 없음', r_0: '시작할 때', r_5: '5분 전', r_10: '10분 전', r_30: '30분 전', r_60: '1시간 전',
+    iosHint: '아이폰에서는 이 사이트를 홈 화면에 추가(공유 → 홈 화면에 추가)하고 그 아이콘으로 열어야 알림이 와요.',
+    cancel: '취소', delRoutine: '루틴 삭제', delSub: '이 날만 지울까요, 반복되는 모든 날을 지울까요?', onlyThis: '이 날만', allDays: '모든 날',
+    signIn: '로그인', loginSub: '로그인하면 플래너가 모든 기기에 동기화돼요.', google: 'Google로 계속하기', orEmail: '또는 이메일로 로그인',
+    codePh: '이메일로 받은 코드', sendCode: '코드 보내기', signInBtn: '로그인', codeSent: e => `${e}로 보낸 코드를 입력하세요.`,
+    welcome: '환영해요.', tagline: '누구나 J로 만들어 주는 월간 플래너.',
+    step1: '한 번뿐인 일정은 <b>+ 일정</b>, 매주 하는 습관은 <b>+ 루틴</b>.',
+    step2: '날짜를 누르면 24시간 시계가 나오고, 끝낸 일을 체크할 수 있어요.',
+    step3: '날짜를 아직 안 정한 일은 달력 아래 <b>언젠가 할 일</b>에 적어 두세요.',
+    step4: '<b>알림</b>을 고르면 일정 전에 알려드려요.',
+    startPlanning: '시작하기', groups: '그룹', groupsTitle: '그룹', groupsSub: '일정에 색을 입혀요. 예: 회사는 회색, 친구는 노랑.',
+    groupPh: '새 그룹', done: '완료', signOut: '로그아웃',
+    syncFail: '동기화하지 못했어요. 이 기기에는 저장됐어요.', todoCount: n => `${n}개 남음`, schedule: '일정 잡기', today: '+ 오늘',
+    tdEmpty: '해야 하지만 날짜는 안 정한 일들.', routine: '루틴', empty: '비어 있음', doneLbl: '완료', addAnEvent: '일정을 추가해 보세요',
+    nothing: '일정이 없어요.', fitToday: '오늘 하나 해볼까요?', newRoutine: '새 루틴', editRoutine: '루틴 수정', newEvent: '새 일정', editEvent: '일정 수정',
+    subFixedEdit: '반복되는 모든 날에 적용돼요.', subFixedNew: '고른 요일마다 같은 시간에 반복돼요.', subOnce: '하루만 있는 일정이에요.',
+    save: '저장', none: '없음', errEnd: '종료 시간은 시작 시간보다 늦어야 해요.', errDays: '요일을 하나 이상 골라 주세요.', errUntil: '종료일은 시작일과 같거나 그 뒤여야 해요.',
+    noGroups: '아직 그룹이 없어요.', delGroup: '이 그룹을 삭제할까요? 일정은 색 없이 남아요.', del: '삭제', doneAria: '완료',
+    remOff: '알림이 꺼져 있어요. 이 사이트의 알림을 허용해 주세요.', remFail: '이 기기에서 알림을 켜지 못했어요.', offline: '오프라인이에요. 이 기기에 저장된 일정을 보여드려요.',
+  },
+  ja: {
+    prevMonth: '前の月', nextMonth: '次の月', routineBtn: '+ ルーティン', eventBtn: '+ 予定',
+    someday: 'いつかやること', tdPh: '日付のないタスクを追加', tdAria: '新しいタスク', add: '追加', howTo: '使い方', privacy: 'プライバシー',
+    close: '閉じる', addEventDay: '+ 予定を追加', important: '重要', name: '名前', namePh: '例：筋トレ', allDay: '終日',
+    start: '開始', end: '終了', group: 'グループ', repeatOn: '繰り返す曜日', from: '開始日', until: '終了日', date: '日付', remind: 'リマインダー',
+    r_none: 'なし', r_0: '開始時刻', r_5: '5分前', r_10: '10分前', r_30: '30分前', r_60: '1時間前',
+    iosHint: 'iPhoneでは、このサイトをホーム画面に追加（共有 → ホーム画面に追加）し、そのアイコンから開くとリマインダーが届きます。',
+    cancel: 'キャンセル', delRoutine: 'ルーティンを削除', delSub: 'この日だけ削除しますか？繰り返すすべての日を削除しますか？', onlyThis: 'この日だけ', allDays: 'すべての日',
+    signIn: 'ログイン', loginSub: 'ログインするとプランナーがすべての端末で同期されます。', google: 'Googleで続ける', orEmail: 'またはメールでログイン',
+    codePh: 'メールに届いたコード', sendCode: 'コードを送信', signInBtn: 'ログイン', codeSent: e => `${e} に送ったコードを入力してください。`,
+    welcome: 'ようこそ', tagline: 'だれでもJ（計画派）になれる月間プランナー。',
+    step1: '一度きりの予定は<b>+ 予定</b>、毎週の習慣は<b>+ ルーティン</b>。',
+    step2: '日付をタップすると24時間の時計が開き、終わったことをチェックできます。',
+    step3: '日付が決まっていないことは、カレンダーの下の<b>いつかやること</b>へ。',
+    step4: '<b>リマインダー</b>を選ぶと、予定の前に通知します。',
+    startPlanning: 'はじめる', groups: 'グループ', groupsTitle: 'グループ', groupsSub: '予定を色分けします。例：仕事はグレー、友だちは黄色。',
+    groupPh: '新しいグループ', done: '完了', signOut: 'ログアウト',
+    syncFail: '同期できませんでした。この端末には保存されています。', todoCount: n => `残り${n}件`, schedule: '予定にする', today: '+ 今日',
+    tdEmpty: 'やるべきだけど、日付が決まっていないこと。', routine: 'ルーティン', empty: 'なし', doneLbl: '完了', addAnEvent: '予定を追加しましょう',
+    nothing: '予定はありません。', fitToday: '今日やってみる？', newRoutine: '新しいルーティン', editRoutine: 'ルーティンを編集', newEvent: '新しい予定', editEvent: '予定を編集',
+    subFixedEdit: '繰り返すすべての日に反映されます。', subFixedNew: '選んだ曜日の同じ時間に繰り返します。', subOnce: '1日だけの予定です。',
+    save: '保存', none: 'なし', errEnd: '終了時刻は開始時刻より後にしてください。', errDays: '曜日を1つ以上選んでください。', errUntil: '終了日は開始日以降にしてください。',
+    noGroups: 'グループはまだありません。', delGroup: 'このグループを削除しますか？予定は色なしで残ります。', del: '削除', doneAria: '完了',
+    remOff: 'リマインダーがオフです。このサイトの通知を許可してください。', remFail: 'この端末でリマインダーをオンにできませんでした。', offline: 'オフラインです。この端末に保存されたデータを表示しています。',
+  },
+};
+const storedLang = () => { try { return localStorage.getItem('yoj:lang'); } catch {} };
+let L = T[storedLang()] ? storedLang() : 'en';
+const t = (k, ...a) => { const v = T[L][k] ?? T.en[k]; return typeof v === 'function' ? v(...a) : v; };
+// weekday names Sun..Sat in the current language (2026-11-01 is a Sunday)
+const dowNames = () => [...Array(7)].map((_, i) => new Date(2026, 10, 1 + i).toLocaleDateString(LOCALE[L], { weekday: 'short' }));
+function applyLang() {
+  document.documentElement.lang = L;
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-html]').forEach(el => el.innerHTML = t(el.dataset.i18nHtml));
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.dataset.i18nPh));
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.i18nAria)));
+  document.querySelectorAll('.lang').forEach(s => { s.innerHTML = Object.entries(LANGS).map(([k, v]) => `<option value="${k}">${v}</option>`).join(''); s.value = L; });
+  document.querySelectorAll('#fixedF .days span').forEach((s, i) => s.textContent = dowNames()[i]);
+}
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
 const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -330,7 +426,7 @@ const save = () => {
   clearTimeout(syncTimer);
   syncTimer = setTimeout(async () => {
     const { error } = await sb.from('planner').upsert({ user_id: user.id, data: S, updated_at: new Date().toISOString() });
-    if (error) toast('Couldn’t sync. Saved on this device.');
+    if (error) toast(t('syncFail'));
   }, 400);
 };
 
@@ -352,8 +448,8 @@ const chipStyle = i => { const g = grp(i.group); return g ? ` style="background:
 
 function renderMonth() {
   const y = cur.getFullYear(), m = cur.getMonth(), todayS = ymd(new Date());
-  $('#title').textContent = `${MON[m]} ${y}.`;
-  let h = DOW.map(d => `<div class="dow">${d}</div>`).join('');
+  $('#title').textContent = L === 'en' ? cur.toLocaleDateString('en-US', {month:'long', year:'numeric'}) + '.' : cur.toLocaleDateString(LOCALE[L], {year:'numeric', month:'long'});
+  let h = dowNames().map(d => `<div class="dow">${d}</div>`).join('');
   h += '<div class="day pad"></div>'.repeat(cur.getDay());
   for (let d = 1, n = new Date(y, m+1, 0).getDate(); d <= n; d++) {
     const ds = `${y}-${pad(m+1)}-${pad(d)}`, it = itemsOf(ds);
@@ -369,32 +465,32 @@ function renderMonth() {
 // someday to-dos: no date until scheduled; scheduling turns one into a normal event
 // ponytail: finished to-dos stay in the list until deleted; auto-clear them if the list gets long
 // short = day popup: just the name and "+ Today", so names have room
-const todoRow = (t, label, short) => `
-  <div class="row${t.done ? ' done' : ''}" data-tid="${t.id}">
-    ${short ? '' : `<input type="checkbox" ${t.done ? 'checked' : ''} aria-label="Done">`}
-    <div class="t"><b>${esc(t.title)}</b></div>
-    ${t.done ? '' : `<button class="pillsm" data-sched>${label}</button>`}
-    ${short ? '' : '<button class="x" aria-label="Delete">✕</button>'}
+const todoRow = (x, label, short) => `
+  <div class="row${x.done ? ' done' : ''}" data-tid="${x.id}">
+    ${short ? '' : `<input type="checkbox" ${x.done ? 'checked' : ''} aria-label="${t('doneAria')}">`}
+    <div class="t"><b>${esc(x.title)}</b></div>
+    ${x.done ? '' : `<button class="pillsm" data-sched>${label}</button>`}
+    ${short ? '' : `<button class="x" aria-label="${t('del')}">✕</button>`}
   </div>`;
 function renderTodos() {
   const open = S.todos.filter(t => !t.done);
-  $('#tdCount').textContent = open.length ? `${open.length} to do` : '';
+  $('#tdCount').textContent = open.length ? t('todoCount', open.length) : '';
   $('#tdList').innerHTML = S.todos.length
-    ? [...open, ...S.todos.filter(t => t.done)].map(t => todoRow(t, 'Schedule')).join('')
-    : '<p class="empty">Things you need to do, but not on a set day.</p>';
+    ? [...open, ...S.todos.filter(t => t.done)].map(x => todoRow(x, t('schedule'))).join('')
+    : `<p class="empty">${t('tdEmpty')}</p>`;
 }
 let fromTodo = null;
 const onTodo = e => {
   const r = e.target.closest('[data-tid]'); if (!r) return;
-  const t = S.todos.find(x => x.id === r.dataset.tid);
-  if (e.target.matches('[data-sched]')) { openAdd('once'); fromTodo = t.id; $('#form').title.value = t.title; return; }
-  if (e.target.matches('input')) t.done = e.target.checked;
-  else if (e.target.matches('.x')) S.todos = S.todos.filter(x => x !== t);
+  const td = S.todos.find(x => x.id === r.dataset.tid);
+  if (e.target.matches('[data-sched]')) { openAdd('once'); fromTodo = td.id; $('#form').title.value = td.title; return; }
+  if (e.target.matches('input')) td.done = e.target.checked;
+  else if (e.target.matches('.x')) S.todos = S.todos.filter(x => x !== td);
   else return;
   save(); refresh();
 };
 
-const when = i => i.allDay ? 'All day' : `${i.start}–${hm(mins(i.start) + i.dur)}`;
+const when = i => i.allDay ? t('allDay') : `${i.start}–${hm(mins(i.start) + i.dur)}`;
 
 // 24h dial: 00:00 at top, clockwise; overlapping items go on inner lanes; all-day items only count in the middle
 function renderDial(it) {
@@ -423,24 +519,24 @@ function renderDial(it) {
   const s = it.find(i => i.id === selId), dn = it.filter(i => isDone(selDate, i.id)).length;
   const mid = s
     ? `<b>${esc(s.title)}</b><span>${when(s)}</span>`
-    : `<b>${it.length ? `${dn}/${it.length}` : 'Empty'}</b><span>${it.length ? 'done' : 'Add an event'}</span>`;
+    : `<b>${it.length ? `${dn}/${it.length}` : t('empty')}</b><span>${it.length ? t('doneLbl') : t('addAnEvent')}</span>`;
   $('#dial').innerHTML = svg + `</svg><div class="mid">${mid}</div>`;
 }
 
 function renderDay() {
   const it = itemsOf(selDate), d = new Date(selDate + 'T00:00');
-  $('#dayTitle').textContent = `${MON[d.getMonth()].slice(0,3)} ${d.getDate()}.`;
-  $('#daySub').textContent = d.toLocaleDateString('en-US', {weekday:'long'});
+  $('#dayTitle').textContent = d.toLocaleDateString(LOCALE[L], {month:'short', day:'numeric'}) + (L === 'en' ? '.' : '');
+  $('#daySub').textContent = d.toLocaleDateString(LOCALE[L], {weekday:'long'});
   renderDial(it);
   $('#list').innerHTML = it.length ? it.map(i => `
     <div class="row${i.id === selId ? ' sel' : ''}${isDone(selDate, i.id) ? ' done' : ''}${i.star ? ' star' : ''}" data-id="${i.id}">
-      <input type="checkbox" ${isDone(selDate, i.id) ? 'checked' : ''} aria-label="Done">
+      <input type="checkbox" ${isDone(selDate, i.id) ? 'checked' : ''} aria-label="${t('doneAria')}">
       <i class="gdot"${grp(i.group) ? ` style="background:${grp(i.group).color}"` : ''}></i>
-      <div class="t"><b>${esc(i.title)}</b><span>${when(i)}${i.fixed ? ' · Routine' : ''}${i.alarm != null ? ' · 🔔' : ''}${grp(i.group) ? ' · ' + esc(grp(i.group).name) : ''}</span></div>
-      <button class="x" aria-label="Delete">✕</button>
-    </div>`).join('') : '<p class="empty">Nothing planned.</p>';
+      <div class="t"><b>${esc(i.title)}</b><span>${when(i)}${i.fixed ? ' · ' + t('routine') : ''}${i.alarm != null ? ' · 🔔' : ''}${grp(i.group) ? ' · ' + esc(grp(i.group).name) : ''}</span></div>
+      <button class="x" aria-label="${t('del')}">✕</button>
+    </div>`).join('') : `<p class="empty">${t('nothing')}</p>`;
   const td = S.todos.filter(t => !t.done);
-  $('#dayTodos').innerHTML = td.length ? `<p class="lbl">Fit one in today?</p><div class="list">${td.map(t => todoRow(t, '+ Today', true)).join('')}</div>` : '';
+  $('#dayTodos').innerHTML = td.length ? `<p class="lbl">${t('fitToday')}</p><div class="list">${td.map(x => todoRow(x, t('today'), true)).join('')}</div>` : '';
 }
 
 const refresh = () => { renderMonth(); if ($('#dayDlg').open) renderDay(); };
@@ -491,15 +587,15 @@ function askDeleteRoutine(f) {
 
 function openAdd(type, it) {
   addType = type; editId = it?.id || null; fromTodo = null;
-  $('#addTitle').textContent = (it ? 'Edit ' : 'New ') + (type === 'fixed' ? 'routine.' : 'event.');
+  $('#addTitle').textContent = t((it ? 'edit' : 'new') + (type === 'fixed' ? 'Routine' : 'Event'));
   $('#addSub').textContent = type === 'fixed'
-    ? (it ? 'Changes apply to every day it repeats.' : 'Repeats at the same time on the chosen weekdays.')
-    : 'A one-time event on a single day.';
-  $('#addSubmit').textContent = it ? 'Save' : 'Add';
+    ? t(it ? 'subFixedEdit' : 'subFixedNew')
+    : t('subOnce');
+  $('#addSubmit').textContent = t(it ? 'save' : 'add');
   $('#fixedF').hidden = type !== 'fixed';
   $('#onceF').hidden = type === 'fixed';
   $('#form').reset(); gap = 0;
-  $('#groupPick').innerHTML = [{id:'', name:'None', color:''}, ...S.groups].map((g, k) =>
+  $('#groupPick').innerHTML = [{id:'', name:t('none'), color:''}, ...S.groups].map((g, k) =>
     `<label><input type="radio" name="group" value="${g.id}"${k ? '' : ' checked'}><span>${g.id ? `<i class="gdot" style="background:${g.color}"></i>` : ''}${esc(g.name)}</span></label>`).join('');
   $('#form').date.value = selDate && $('#dayDlg').open ? selDate : ymd(new Date());
   // routines default to the month on screen; clearing Until means no end date
@@ -549,7 +645,7 @@ $('.quick').onclick = e => {
   if (n && f.start.value) setEnd(Math.max(mins(f.end.value || f.start.value), mins(f.start.value)) + n);
 };
 
-$('#fixedF .days').innerHTML = DOW.map((d, i) => `<label><input type="checkbox" value="${i}" checked><span>${d}</span></label>`).join('');
+$('#fixedF .days').innerHTML = dowNames().map((d, i) => `<label><input type="checkbox" value="${i}" checked><span>${d}</span></label>`).join('');
 
 // replace the item being edited, or add a new one
 const upsert = (list, item) => { const i = list.findIndex(x => x.id === item.id); i < 0 ? list.push(item) : list[i] = item; };
@@ -557,13 +653,13 @@ $('#form').onsubmit = e => {
   e.preventDefault();
   const f = e.target, base = { id: editId || uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null, star: f.star.checked, alarm: f.alarm.value === '' ? null : +f.alarm.value };
   if (f.allDay.checked) Object.assign(base, { allDay: true, start: '00:00', dur: 0, alarm: null }); // sorts first in the day
-  else if (base.dur <= 0) return alert('End time must be after start time.');
+  else if (base.dur <= 0) return alert(t('errEnd'));
   if (base.alarm != null) enablePush(); // must start inside the tap so iOS shows the permission prompt
   if (addType === 'fixed') {
     const days = [...f.querySelectorAll('.days input:checked')].map(i => +i.value);
-    if (!days.length) return alert('Pick at least one weekday.');
+    if (!days.length) return alert(t('errDays'));
     const from = f.from.value || null, until = f.until.value || null;
-    if (from && until && until < from) return alert('Until must be on or after From.');
+    if (from && until && until < from) return alert(t('errUntil'));
     upsert(S.fixed, { ...base, days, from, until, skip: S.fixed.find(x => x.id === editId)?.skip });
   } else {
     if (!f.date.value) return;
@@ -577,9 +673,9 @@ function renderGroups() {
   $('#gList').innerHTML = S.groups.length ? S.groups.map(g => `
     <div class="grow" data-id="${g.id}">
       <input type="color" value="${g.color}" aria-label="Color">
-      <input type="text" value="${esc(g.name)}" maxlength="20" aria-label="Name">
-      <button class="x" aria-label="Delete group">✕</button>
-    </div>`).join('') : '<p class="empty">No groups yet.</p>';
+      <input type="text" value="${esc(g.name)}" maxlength="20" aria-label="${t('name')}">
+      <button class="x" aria-label="${t('del')}">✕</button>
+    </div>`).join('') : `<p class="empty">${t('noGroups')}</p>`;
 }
 $('#openGroups').onclick = () => { renderGroups(); $('#grpDlg').showModal(); };
 $('#grpClose').onclick = () => $('#grpDlg').close();
@@ -597,7 +693,7 @@ $('#gList').oninput = e => {
 };
 $('#gList').onclick = e => {
   if (!e.target.matches('.x')) return;
-  if (!confirm('Delete this group? Its events stay, without color.')) return;
+  if (!confirm(t('delGroup'))) return;
   const id = e.target.closest('.grow').dataset.id;
   S.groups = S.groups.filter(g => g.id !== id);
   save(); renderGroups(); renderMonth();
@@ -607,8 +703,8 @@ $('#gList').onclick = e => {
 function resetLogin() {
   const f = $('#loginForm');
   f.reset(); f.code.hidden = true; f.code.required = false; f.email.readOnly = false;
-  $('#loginBtn').textContent = 'Send code';
-  $('#loginSub').textContent = 'Sign in to sync your planner.';
+  $('#loginBtn').textContent = t('sendCode');
+  $('#loginSub').textContent = t('loginSub');
 }
 $('#loginDlg').oncancel = e => e.preventDefault();
 // Google: redirects away, Supabase returns here and getSession() picks the session up from the URL
@@ -625,8 +721,8 @@ $('#loginForm').onsubmit = async e => {
     if (error) alert(error.message);
     else {
       f.code.hidden = false; f.code.required = true; f.email.readOnly = true;
-      btn.textContent = 'Sign in';
-      $('#loginSub').textContent = `Enter the code sent to ${email}.`;
+      btn.textContent = t('signInBtn');
+      $('#loginSub').textContent = t('codeSent', email);
       f.code.focus();
     }
   } else {
@@ -644,14 +740,14 @@ if (canPush) navigator.serviceWorker.register('/sw.js').catch(() => {});
 $('#alarmHint').hidden = canPush || !/iPhone|iPad/.test(navigator.userAgent);
 async function enablePush() {
   if (!canPush || !user) return;
-  if (await Notification.requestPermission() !== 'granted') return toast('Reminders are off. Allow notifications for this site.');
+  if (await Notification.requestPermission() !== 'granted') return toast(t('remOff'));
   try {
     const reg = await navigator.serviceWorker.ready;
     const key = Uint8Array.from(atob(VAPID.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
     const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
     const { error } = await sb.from('push_subs').upsert({ endpoint: sub.endpoint, sub: sub.toJSON(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone });
     if (error) throw error;
-  } catch { toast('Couldn’t turn on reminders on this device.'); }
+  } catch { toast(t('remFail')); }
 }
 // stop this device's reminders so the next person signing in here doesn't get them
 async function disablePush() {
@@ -676,10 +772,12 @@ async function start(session) {
   S = {...empty(), ...readLocal(localKey())};
   if (user) {
     const { data, error } = await sb.from('planner').select('data').maybeSingle();
-    if (error) toast('Offline. Showing data saved on this device.');
+    if (error) toast(t('offline'));
     else if (data) S = {...empty(), ...data.data};
     else { S = {...empty(), ...readLocal('monthdo')}; save(); } // first sign-in: upload what was planned before login
   }
+  // a language picked on this device wins; a fresh device takes the account's language
+  if (user) { if (!storedLang() && T[S.lang]) setLang(S.lang); else if (S.lang !== L) { S.lang = L; save(); } }
   renderMonth();
   // show the welcome once per account (saved with the planner, so not again on other devices)
   if (!S.welcomed) $('#welcomeDlg').showModal();
@@ -687,6 +785,16 @@ async function start(session) {
 const welcomed = () => { if (!S.welcomed) { S.welcomed = 1; save(); } };
 $('#welcomeDlg').onclose = welcomed;
 $('#welcomeDlg a').onclick = welcomed;
+// S.lang is also read by send-alarms to write reminders in this language
+function setLang(l) {
+  L = l;
+  try { localStorage.setItem('yoj:lang', l); } catch {}
+  if (user && S.lang !== l) { S.lang = l; save(); }
+  applyLang(); refresh(); if ($('#grpDlg').open) renderGroups();
+  if ($('#loginForm').code.hidden) { $('#loginBtn').textContent = t('sendCode'); $('#loginSub').textContent = t('loginSub'); }
+}
+document.addEventListener('change', e => { if (e.target.matches('.lang')) setLang(e.target.value); });
+applyLang();
 if (sb) sb.auth.getSession().then(({ data }) => start(data.session));
 else start(null);
 </script>
