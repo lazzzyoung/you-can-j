@@ -57,11 +57,6 @@ main{max-width:960px;margin:0 auto}
 @keyframes spin{to{--a:360deg}}
 @media(prefers-reduced-motion:reduce){.star{animation:none}}
 .stack{display:flex;flex-direction:column;gap:12px}
-.pilltog{align-self:flex-start;cursor:pointer}
-.pilltog input{position:absolute;opacity:0;width:0;height:0}
-.pilltog span{display:inline-flex;align-items:center;height:36px;padding:0 16px;border-radius:9999px;background:var(--soft);font-size:14px;font-weight:600}
-.pilltog input:checked+span{background:var(--ink);color:#fff}
-.pilltog input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
 .steps{display:flex;flex-direction:column;gap:10px;padding-left:20px;margin:8px 0 24px;font-size:15px}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
 .dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -120,7 +115,8 @@ input::placeholder{color:var(--faint)}
 .days span{display:grid;place-items:center;height:40px;border-radius:9999px;background:var(--soft);font-size:14px;font-weight:600;cursor:pointer}
 .days input:checked+span{background:var(--ink);color:#fff}
 .quick{display:flex;gap:6px}
-.quick button{flex:1;height:36px;border-radius:9999px;background:var(--soft);font-size:14px;font-weight:600}
+.quick [data-allday]{flex:1.4}
+.quick button{flex:1;white-space:nowrap;padding:0 6px;height:36px;border-radius:9999px;background:var(--soft);font-size:14px;font-weight:600}
 .actions{display:flex;gap:8px;margin-top:4px}
 .actions .btn{flex:1}
 
@@ -212,13 +208,12 @@ footer a{color:var(--faint)}
   <p class="sub" id="addSub"></p>
   <form id="form">
     <label class="f"><span data-i18n="name">Name</span><input type="text" name="title" placeholder="e.g. Workout" data-i18n-ph="namePh" required maxlength="40"></label>
-    <label class="pilltog"><input type="checkbox" name="allDay"><span data-i18n="allDay">All day</span></label>
     <div class="stack" id="timeF">
       <div class="two">
         <label class="f"><span data-i18n="start">Start</span><input type="time" name="start" value="07:00" required></label>
         <label class="f"><span data-i18n="end">End</span><input type="time" name="end" value="07:00" required></label>
       </div>
-      <div class="quick"><button type="button" data-add="10">+10m</button><button type="button" data-add="30">+30m</button><button type="button" data-add="60">+1h</button></div>
+      <div class="quick"><button type="button" data-add="10">+10m</button><button type="button" data-add="30">+30m</button><button type="button" data-add="60">+1h</button><button type="button" data-allday data-i18n="allDay">All day</button></div>
     </div>
     <div class="f"><span style="font-size:14px;font-weight:600" data-i18n="group">Group</span>
       <div class="groups" id="groupPick"></div>
@@ -490,13 +485,14 @@ const onTodo = e => {
   save(); refresh();
 };
 
-const when = i => i.allDay ? t('allDay') : `${i.start}–${hm(mins(i.start) + i.dur)}`;
+const isAllDay = i => i.start === '00:00' && i.dur >= 1439;
+const when = i => isAllDay(i) ? t('allDay') : `${i.start}–${hm(mins(i.start) + i.dur)}`;
 
-// 24h dial: 00:00 at top, clockwise; overlapping items go on inner lanes; all-day items only count in the middle
+// 24h dial: 00:00 at top, clockwise; overlapping items go on inner lanes
 function renderDial(it) {
   const C = 160, R0 = 128, W = 16, STEP = 20;
-  const laneEnds = [], lane = new Map(), timed = it.filter(i => !i.allDay);
-  timed.forEach(i => {
+  const laneEnds = [], lane = new Map();
+  it.forEach(i => {
     const s = mins(i.start), e = Math.min(s + i.dur, 1440);
     let l = laneEnds.findIndex(end => end <= s);
     if (l < 0) l = laneEnds.length;
@@ -510,7 +506,7 @@ function renderDial(it) {
     const [x, y] = pt(R0 + 26, h * 60);
     svg += `<text x="${x}" y="${y}" font-size="11" font-weight="600" fill="#707070" text-anchor="middle" dominant-baseline="central">${h}</text>`;
   }
-  timed.forEach(i => {
+  it.forEach(i => {
     const s = mins(i.start), e = Math.min(s + i.dur, 1439.9), r = R0 - lane.get(i.id) * STEP;
     const [x0, y0] = pt(r, s), [x1, y1] = pt(r, e);
     const col = isDone(selDate, i.id) ? '#e0e0e0' : grp(i.group)?.color || '#707070';
@@ -603,9 +599,8 @@ function openAdd(type, it) {
   $('#form').until.value = ymd(new Date(cur.getFullYear(), cur.getMonth() + 1, 0));
   if (it) {
     const f = $('#form');
-    f.title.value = it.title; f.star.checked = !!it.star; f.alarm.value = it.alarm ?? ''; f.allDay.checked = !!it.allDay;
-    // all-day items keep the default times, so unticking All day gives sensible fields
-    if (!it.allDay) { f.start.value = it.start; f.end.value = hm(Math.min(mins(it.start) + it.dur, 1439)); gap = it.dur; }
+    f.title.value = it.title; f.star.checked = !!it.star; f.alarm.value = it.alarm ?? '';
+    f.start.value = it.start; f.end.value = hm(Math.min(mins(it.start) + it.dur, 1439)); gap = it.dur;
     const g = f.querySelector(`[name=group][value="${it.group || ''}"]`);
     if (g) g.checked = true;
     if (type === 'fixed') {
@@ -613,16 +608,8 @@ function openAdd(type, it) {
       f.from.value = it.from || ''; f.until.value = it.until || '';
     } else f.date.value = it.date;
   }
-  setAllDay();
   $('#addDlg').showModal();
 }
-// All day hides the times and reminder (hidden fields can't stay required, or the form won't submit)
-function setAllDay() {
-  const f = $('#form'), on = f.allDay.checked;
-  $('#timeF').hidden = $('#alarmF').hidden = on;
-  f.start.required = f.end.required = !on;
-}
-$('#form').allDay.onchange = setAllDay;
 $('#tdList').onclick = $('#dayTodos').onclick = onTodo;
 $('#tdForm').onsubmit = e => {
   e.preventDefault();
@@ -642,6 +629,7 @@ $('#form').start.oninput = e => { if (e.target.value) setEnd(mins(e.target.value
 $('#form').end.oninput = e => { if (e.target.value) gap = mins(e.target.value) - mins($('#form').start.value); };
 $('.quick').onclick = e => {
   const n = +e.target.dataset.add, f = $('#form');
+  if (e.target.matches('[data-allday]')) { f.start.value = '00:00'; return setEnd(1439); } // 00:00–23:59
   if (n && f.start.value) setEnd(Math.max(mins(f.end.value || f.start.value), mins(f.start.value)) + n);
 };
 
@@ -652,8 +640,7 @@ const upsert = (list, item) => { const i = list.findIndex(x => x.id === item.id)
 $('#form').onsubmit = e => {
   e.preventDefault();
   const f = e.target, base = { id: editId || uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null, star: f.star.checked, alarm: f.alarm.value === '' ? null : +f.alarm.value };
-  if (f.allDay.checked) Object.assign(base, { allDay: true, start: '00:00', dur: 0, alarm: null }); // sorts first in the day
-  else if (base.dur <= 0) return alert(t('errEnd'));
+  if (base.dur <= 0) return alert(t('errEnd'));
   if (base.alarm != null) enablePush(); // must start inside the tap so iOS shows the permission prompt
   if (addType === 'fixed') {
     const days = [...f.querySelectorAll('.days input:checked')].map(i => +i.value);
@@ -776,6 +763,7 @@ async function start(session) {
     else if (data) S = {...empty(), ...data.data};
     else { S = {...empty(), ...readLocal('monthdo')}; save(); } // first sign-in: upload what was planned before login
   }
+  for (const i of [...S.fixed, ...S.once]) if (i.allDay) { i.dur = 1439; delete i.allDay; }
   // a language picked on this device wins; a fresh device takes the account's language
   if (user) { if (!storedLang() && T[S.lang]) setLang(S.lang); else if (S.lang !== L) { S.lang = L; save(); } }
   renderMonth();
