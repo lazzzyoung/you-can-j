@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.2] - 2026-11-11
+### Added
+- Guide: step-by-step "Add to your Home Screen" for iPhone/iPad Safari, Android Chrome and Samsung Internet, in all three languages.
+
 ## [0.7.1] - 2026-11-11
 ### Changed
 - All day is a button after +1h that sets 00:00–23:59; all-day plans fill the 24-hour dial and can have a reminder.
