@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0] - 2026-11-11
+### Added
+- Guest mode: "Try without signing in" after a warning that plans stay only in this browser. Guests see a note and a Sign in button; signing in later uploads their plans to a new account.
+
+### Fixed
+- Stacked dialog buttons keep their full height.
+- Korean text breaks between words; the app name stays on one line on narrow screens.
+
 ## [0.7.2] - 2026-11-11
 ### Added
 - Guide: step-by-step "Add to your Home Screen" for iPhone/iPad Safari, Android Chrome and Samsung Internet, in all three languages.
