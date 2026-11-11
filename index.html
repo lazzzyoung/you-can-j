@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>You can J</title>
+<meta name="description" content="A monthly planner that turns anyone into a J.">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -55,6 +56,14 @@ main{max-width:960px;margin:0 auto}
 .row.star{padding:8px 6px 8px 14px}
 @keyframes spin{to{--a:360deg}}
 @media(prefers-reduced-motion:reduce){.star{animation:none}}
+.stack{display:flex;flex-direction:column;gap:12px}
+.pilltog{align-self:flex-start;cursor:pointer}
+.pilltog input{position:absolute;opacity:0;width:0;height:0}
+.pilltog span{display:inline-flex;align-items:center;height:36px;padding:0 16px;border-radius:9999px;background:var(--soft);font-size:14px;font-weight:600}
+.pilltog input:checked+span{background:var(--ink);color:#fff}
+.pilltog input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
+.steps{display:flex;flex-direction:column;gap:10px;padding-left:20px;margin:8px 0 24px;font-size:15px}
+a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
 .dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .starbtn{position:relative;flex:none;cursor:pointer}
 .starbtn input{position:absolute;opacity:0;width:0;height:0}
@@ -178,7 +187,7 @@ footer a{color:var(--faint)}
     <div class="list" id="tdList"></div>
   </section>
 </main>
-<footer><a href="/privacy.html">Privacy</a></footer>
+<footer><a href="/guide.html">How to use</a> · <a href="/privacy.html">Privacy</a></footer>
 
 <dialog id="dayDlg">
   <h2 id="dayTitle"></h2><p class="sub" id="daySub"></p>
@@ -200,11 +209,14 @@ footer a{color:var(--faint)}
   <p class="sub" id="addSub"></p>
   <form id="form">
     <label class="f">Name<input type="text" name="title" placeholder="e.g. Workout" required maxlength="40"></label>
-    <div class="two">
-      <label class="f">Start<input type="time" name="start" value="07:00" required></label>
-      <label class="f">End<input type="time" name="end" value="07:00" required></label>
+    <label class="pilltog"><input type="checkbox" name="allDay"><span>All day</span></label>
+    <div class="stack" id="timeF">
+      <div class="two">
+        <label class="f">Start<input type="time" name="start" value="07:00" required></label>
+        <label class="f">End<input type="time" name="end" value="07:00" required></label>
+      </div>
+      <div class="quick"><button type="button" data-add="10">+10m</button><button type="button" data-add="30">+30m</button><button type="button" data-add="60">+1h</button></div>
     </div>
-    <div class="quick"><button type="button" data-add="10">+10m</button><button type="button" data-add="30">+30m</button><button type="button" data-add="60">+1h</button></div>
     <div class="f"><span style="font-size:14px;font-weight:600">Group</span>
       <div class="groups" id="groupPick"></div>
     </div>
@@ -216,7 +228,7 @@ footer a{color:var(--faint)}
       </div>
     </div>
     <label class="f" id="onceF">Date<input type="date" name="date"></label>
-    <label class="f">Remind me
+    <label class="f" id="alarmF">Remind me
       <select name="alarm">
         <option value="">No reminder</option>
         <option value="0">At start time</option>
@@ -259,6 +271,21 @@ footer a{color:var(--faint)}
   </form>
 </dialog>
 <div id="toast" hidden></div>
+
+<dialog id="welcomeDlg">
+  <h2>Welcome.</h2>
+  <p class="sub">A monthly planner that turns anyone into a J.</p>
+  <ol class="steps">
+    <li><b>+ Event</b> for one-off plans, <b>+ Routine</b> for weekly habits.</li>
+    <li>Tap a date to see its 24-hour clock and check things off.</li>
+    <li>Put to-dos without a date in <b>Someday</b>, under the calendar.</li>
+    <li>Pick <b>Remind me</b> to get a notification before a plan.</li>
+  </ol>
+  <form method="dialog" class="actions" style="flex-direction:row">
+    <a class="btn outline" href="/guide.html">How to use</a>
+    <button class="btn primary">Start planning</button>
+  </form>
+</dialog>
 
 <dialog id="grpDlg">
   <h2>Groups.</h2>
@@ -367,11 +394,13 @@ const onTodo = e => {
   save(); refresh();
 };
 
-// 24h dial: 00:00 at top, clockwise; overlapping items go on inner lanes
+const when = i => i.allDay ? 'All day' : `${i.start}–${hm(mins(i.start) + i.dur)}`;
+
+// 24h dial: 00:00 at top, clockwise; overlapping items go on inner lanes; all-day items only count in the middle
 function renderDial(it) {
   const C = 160, R0 = 128, W = 16, STEP = 20;
-  const laneEnds = [], lane = new Map();
-  it.forEach(i => {
+  const laneEnds = [], lane = new Map(), timed = it.filter(i => !i.allDay);
+  timed.forEach(i => {
     const s = mins(i.start), e = Math.min(s + i.dur, 1440);
     let l = laneEnds.findIndex(end => end <= s);
     if (l < 0) l = laneEnds.length;
@@ -385,7 +414,7 @@ function renderDial(it) {
     const [x, y] = pt(R0 + 26, h * 60);
     svg += `<text x="${x}" y="${y}" font-size="11" font-weight="600" fill="#707070" text-anchor="middle" dominant-baseline="central">${h}</text>`;
   }
-  it.forEach(i => {
+  timed.forEach(i => {
     const s = mins(i.start), e = Math.min(s + i.dur, 1439.9), r = R0 - lane.get(i.id) * STEP;
     const [x0, y0] = pt(r, s), [x1, y1] = pt(r, e);
     const col = isDone(selDate, i.id) ? '#e0e0e0' : grp(i.group)?.color || '#707070';
@@ -393,7 +422,7 @@ function renderDial(it) {
   });
   const s = it.find(i => i.id === selId), dn = it.filter(i => isDone(selDate, i.id)).length;
   const mid = s
-    ? `<b>${esc(s.title)}</b><span>${s.start}–${hm(mins(s.start) + s.dur)}</span>`
+    ? `<b>${esc(s.title)}</b><span>${when(s)}</span>`
     : `<b>${it.length ? `${dn}/${it.length}` : 'Empty'}</b><span>${it.length ? 'done' : 'Add an event'}</span>`;
   $('#dial').innerHTML = svg + `</svg><div class="mid">${mid}</div>`;
 }
@@ -407,7 +436,7 @@ function renderDay() {
     <div class="row${i.id === selId ? ' sel' : ''}${isDone(selDate, i.id) ? ' done' : ''}${i.star ? ' star' : ''}" data-id="${i.id}">
       <input type="checkbox" ${isDone(selDate, i.id) ? 'checked' : ''} aria-label="Done">
       <i class="gdot"${grp(i.group) ? ` style="background:${grp(i.group).color}"` : ''}></i>
-      <div class="t"><b>${esc(i.title)}</b><span>${i.start}–${hm(mins(i.start) + i.dur)}${i.fixed ? ' · Routine' : ''}${i.alarm != null ? ' · 🔔' : ''}${grp(i.group) ? ' · ' + esc(grp(i.group).name) : ''}</span></div>
+      <div class="t"><b>${esc(i.title)}</b><span>${when(i)}${i.fixed ? ' · Routine' : ''}${i.alarm != null ? ' · 🔔' : ''}${grp(i.group) ? ' · ' + esc(grp(i.group).name) : ''}</span></div>
       <button class="x" aria-label="Delete">✕</button>
     </div>`).join('') : '<p class="empty">Nothing planned.</p>';
   const td = S.todos.filter(t => !t.done);
@@ -478,8 +507,9 @@ function openAdd(type, it) {
   $('#form').until.value = ymd(new Date(cur.getFullYear(), cur.getMonth() + 1, 0));
   if (it) {
     const f = $('#form');
-    f.title.value = it.title; f.start.value = it.start; f.star.checked = !!it.star; f.alarm.value = it.alarm ?? '';
-    f.end.value = hm(Math.min(mins(it.start) + it.dur, 1439)); gap = it.dur;
+    f.title.value = it.title; f.star.checked = !!it.star; f.alarm.value = it.alarm ?? ''; f.allDay.checked = !!it.allDay;
+    // all-day items keep the default times, so unticking All day gives sensible fields
+    if (!it.allDay) { f.start.value = it.start; f.end.value = hm(Math.min(mins(it.start) + it.dur, 1439)); gap = it.dur; }
     const g = f.querySelector(`[name=group][value="${it.group || ''}"]`);
     if (g) g.checked = true;
     if (type === 'fixed') {
@@ -487,8 +517,16 @@ function openAdd(type, it) {
       f.from.value = it.from || ''; f.until.value = it.until || '';
     } else f.date.value = it.date;
   }
+  setAllDay();
   $('#addDlg').showModal();
 }
+// All day hides the times and reminder (hidden fields can't stay required, or the form won't submit)
+function setAllDay() {
+  const f = $('#form'), on = f.allDay.checked;
+  $('#timeF').hidden = $('#alarmF').hidden = on;
+  f.start.required = f.end.required = !on;
+}
+$('#form').allDay.onchange = setAllDay;
 $('#tdList').onclick = $('#dayTodos').onclick = onTodo;
 $('#tdForm').onsubmit = e => {
   e.preventDefault();
@@ -518,7 +556,8 @@ const upsert = (list, item) => { const i = list.findIndex(x => x.id === item.id)
 $('#form').onsubmit = e => {
   e.preventDefault();
   const f = e.target, base = { id: editId || uid(), title: f.title.value.trim(), start: f.start.value, dur: mins(f.end.value) - mins(f.start.value), group: f.querySelector('[name=group]:checked')?.value || null, star: f.star.checked, alarm: f.alarm.value === '' ? null : +f.alarm.value };
-  if (base.dur <= 0) return alert('End time must be after start time.');
+  if (f.allDay.checked) Object.assign(base, { allDay: true, start: '00:00', dur: 0, alarm: null }); // sorts first in the day
+  else if (base.dur <= 0) return alert('End time must be after start time.');
   if (base.alarm != null) enablePush(); // must start inside the tap so iOS shows the permission prompt
   if (addType === 'fixed') {
     const days = [...f.querySelectorAll('.days input:checked')].map(i => +i.value);
@@ -642,7 +681,12 @@ async function start(session) {
     else { S = {...empty(), ...readLocal('monthdo')}; save(); } // first sign-in: upload what was planned before login
   }
   renderMonth();
+  // show the welcome once per account (saved with the planner, so not again on other devices)
+  if (!S.welcomed) $('#welcomeDlg').showModal();
 }
+const welcomed = () => { if (!S.welcomed) { S.welcomed = 1; save(); } };
+$('#welcomeDlg').onclose = welcomed;
+$('#welcomeDlg a').onclick = welcomed;
 if (sb) sb.auth.getSession().then(({ data }) => start(data.session));
 else start(null);
 </script>
